@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body class="h-[88vh] m-0 p-0 box-border">
+
+    <div id="show-btn" tabindex="0" role="button" class="btn lg:hidden xl:hidden 2xl:hidden btn-ghost btn-circle">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /> </svg>
+    </div>
+
+<!-- remove price dialog -->
+<dialog id="my_modal_3" class="modal">
+  <div class="modal-box">
+    <form method="dialog">
+      <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onclick="closeModal()">✕</button>
+    </form>
+    <h3 class="text-lg font-bold">Produkt entfernen</h3>
+    <p class="py-4" id="modal-text">Bist du sicher, dass du dieses Produkt entfernen möchtest?</p>
+    <div class="modal-action">
+      <button class="btn btn-error" id="confirm-remove-btn">Remove</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</dialog>
+
+
+    <!-- modal -->
+<dialog id="prod_modal" class="modal">
+  <div class="modal-box">
+    <form method="dialog">
+      <button id="close-btn" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+    </form>
+
+        <!-- card -->
+    <div id="card" class="card bg-base-100 shadow-sm"></div>
+  </div>
+</dialog>
+
+    <div class="flex h-full">
+        <!-- Tab Navigation -->
+        <ul id="sidebarcomp" class="menu bg-base-200 w-56 hidden lg:block xl:block 2xl:block">
+        <li class="text-xl ml-2 text-accent">Dashboard</li>
+        <li>
+            <details open>
+            <summary class="text-accent">Orders</summary>
+            <ul>
+                <li><a>Today</a></li>
+                <li><a>All</a></li>
+            </ul>
+            </details>
+        </li>
+        <li>
+            <details open>
+            <summary class="text-accent">Stock</summary>
+            <ul>
+                <li><a>Out of Stock</a></li>
+                <li><a>Going Out of Stock</a></li>
+                <li><a>All</a></li>
+            </ul>
+            </details>
+        </li>
+        
+        <li>
+            <details open>
+            <summary class="text-accent">Products</summary>
+            <ul>
+                <li><a>Synced Products</a></li>
+                <li><a>Non Synced Products</a></li>
+            </ul>
+            </details>
+        </li>
+
+        <li>
+            <details open>
+            <summary class="text-accent">Price Change</summary>
+            <ul>
+                <li><a>Changed Prices</a></li>
+            </ul>
+            </details>
+        </li>
+        </ul>
+
+        <!-- Container -->
+        <div id="container" class="flex-1 h-full text-white overflow-y-auto overflow-x-auto"></div>
+    </div>
+    <script src="./js/cdn.js"></script>
+</body>
+</html>

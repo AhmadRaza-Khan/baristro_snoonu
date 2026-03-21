@@ -1,0 +1,680 @@
+{
+    "menuId": "1",
+    "menuName": [
+        {
+            "language": 0,
+            "value": "NewMenu"
+        },
+        {
+            "language": 1,
+            "value": "نيو"
+        }
+    ],
+    "description": [
+        {
+            "language": 0,
+            "value": " description"
+        },
+        {
+            "language": 1,
+            "value": " تست"
+        }
+    ],
+    "menuImageUrl": "https://media.istockphoto.com/id/545652444/vector/restaurant-cafe-menu-template-design.jpg?s=612x612&w=0&k=20&c=1uSa1pe57w3Z0MpuYrM1v8mq7-nJHXRnUOLi7DajKjU=",
+    "currency": "QR",
+    "categories": [
+        {
+            "categoryId": "chipcategory",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "chips"
+                },
+                {
+                    "language": 1,
+                    "value": "شيبسى"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "chips category description"
+                },
+                {
+                    "language": 1,
+                    "value": "شيبسى"
+                }
+            ],
+            "imageUrl": "https://www.eatthis.com/wp-content/uploads/sites/4/2024/06/unhealthiest-snacks-on-the-planet.jpg?quality=82&strip=1",
+            "products": [
+                "productquavers",
+                "productlays2",
+                "productcracky"
+            ],
+            "snoozed": false,
+            "sortOrder": 5,
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false
+                },
+                {
+                    "channelId": "0197883a-5c16-7a87-bcdd-b1c479da002e",
+                    "snoozed": false
+                }
+            ]
+        },
+        {
+            "categoryId": "drinkcategory",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "drinks"
+                },
+                {
+                    "language": 1,
+                    "value": "مشروبات"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "drinks description"
+                },
+                {
+                    "language": 1,
+                    "value": "وصف مشروبات"
+                }
+            ],
+            "imageUrl": "https://thumbs.dreamstime.com/b/cool-refreshing-cold-drinks-logo-design-unique-eye-catching-logo-design-perfect-cold-drinks-businesses-vibrant-333289112.jpg",
+            "products": [
+                "productorange",
+                "productstrawberry"
+            ],
+            "snoozed": false,
+            "sortOrder": 1,
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false,
+                    "startTime": "00:00",
+                    "endTime": "23:15"
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false,
+                    "startTime": "00:05",
+                    "endTime": "23:50"
+                }
+            ]
+        }
+    ],
+    "products": [
+        {
+            "productId": "productquavers",
+            "imageUrl": "https://tamwenatelzekrayat.com/cdn/shop/files/12_cb157136-28d4-43b3-976c-be2c4cda012f.png?v=1745188770",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "quavers"
+                },
+                {
+                    "language": 1,
+                    "value": "كوافرز"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "quavers desc"
+                },
+                {
+                    "language": 1,
+                    "value": "وصف كوافرز"
+                }
+            ],
+            "price": 10.25,
+            "defaultDiscount": 0,
+            "sortOrder": 1,
+            "modifierGroups": [
+                "modgroup1"
+            ],
+            "snoozed": false,
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": null,
+                    "discount": null
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": null,
+                    "discount": null
+                }
+            ]
+        },
+        {
+            "productId": "productlays2",
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTgrDkyUac4RSZkIi442nAXGoBSdGSAtFRgsg&s",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "lays"
+                },
+                {
+                    "language": 1,
+                    "value": "لايز"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "lays desc"
+                },
+                {
+                    "language": 1,
+                    "value": "وصف لايز"
+                }
+            ],
+            "price": 18,
+            "defaultDiscount": 2,
+            "modifierGroups": [
+                "modgroup1"
+            ],
+            "snoozed": false,
+            "weeklyAvailabilities": [
+                {
+                    "dayOfWeek": 0,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 1,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 2,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 3,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 4,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 5,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 6,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                }
+            ],
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": 10,
+                    "discount": null,
+                    "featuredSortOrder": 1,
+                    "preparationTime": null
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": null,
+                    "discount": 5,
+                    "featuredSortOrder": 1,
+                    "preparationTime": null
+                }
+            ],
+            "sortOrder": 9,
+            "isPromoted": false,
+            "isFeatured": true,
+            "featuredSortOrder": 0,
+            "preparationTime": 10
+        },
+        {
+            "productId": "productcracky",
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReiTz-bA7TG5WSFZBqsvBexvLExPXiJNlhSw&s",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "cracky"
+                },
+                {
+                    "language": 1,
+                    "value": "كراكى"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "cracky desc"
+                },
+                {
+                    "language": 1,
+                    "value": " وصف كراكى"
+                }
+            ],
+            "price": 9.25,
+            "defaultDiscount": 1,
+            "modifierGroups": [
+                "modgroup1"
+            ],
+            "snoozed": false,
+            "weeklyAvailabilities": [
+                {
+                    "dayOfWeek": 0,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 1,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 2,
+                    "startTime": "00:00",
+                    "endTime": "22:00"
+                },
+                {
+                    "dayOfWeek": 3,
+                    "startTime": "00:00",
+                    "endTime": "22:00"
+                },
+                {
+                    "dayOfWeek": 4,
+                    "startTime": "00:00",
+                    "endTime": "22:00"
+                },
+                {
+                    "dayOfWeek": 5,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 6,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                }
+            ],
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": null,
+                    "discount": null,
+                    "featuredSortOrder": 3,
+                    "preparationTime": null
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": null,
+                    "discount": null,
+                    "featuredSortOrder": 3
+                }
+            ],
+            "sortOrder": 5,
+            "isPromoted": true,
+            "isFeatured": true,
+            "featuredSortOrder": 0,
+            "preparationTime": 10
+        },
+        {
+            "productId": "productorange",
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvBZXuhUQ0UxsTJeD0ga72cBZtGuE8Q4QR7w&s",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "orange juice"
+                },
+                {
+                    "language": 1,
+                    "value": "عصير برتقال"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "orange desc"
+                },
+                {
+                    "language": 1,
+                    "value": "وصف برتقال"
+                }
+            ],
+            "price": 7.25,
+            "defaultDiscount": 0,
+            "modifierGroups": [],
+            "snoozed": false,
+            "weeklyAvailabilities": [
+                {
+                    "dayOfWeek": 0,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 1,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 2,
+                    "startTime": "00:00",
+                    "endTime": "22:00"
+                },
+                {
+                    "dayOfWeek": 3,
+                    "startTime": "00:00",
+                    "endTime": "22:00"
+                },
+                {
+                    "dayOfWeek": 4,
+                    "startTime": "00:00",
+                    "endTime": "22:00"
+                },
+                {
+                    "dayOfWeek": 5,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 6,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                }
+            ],
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": null,
+                    "discount": null
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": null,
+                    "discount": null
+                }
+            ]
+        },
+        {
+            "productId": "productstrawberry",
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdMjXnEK6PWVTALNuQmNQsmol6o04xPZ2K0g&s",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "strawberry juice"
+                },
+                {
+                    "language": 1,
+                    "value": "فراولة"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "strawberry desc"
+                },
+                {
+                    "language": 1,
+                    "value": "وصف فراولة"
+                }
+            ],
+            "price": 9.75,
+            "defaultDiscount": 1.5,
+            "modifierGroups": [],
+            "snoozed": false,
+            "weeklyAvailabilities": [
+                {
+                    "dayOfWeek": 0,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 1,
+                    "startTime": "00:00",
+                    "endTime": "22:00"
+                },
+                {
+                    "dayOfWeek": 2,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 3,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 4,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 5,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                },
+                {
+                    "dayOfWeek": 6,
+                    "startTime": "00:00",
+                    "endTime": "23:00"
+                }
+            ],
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": 8,
+                    "discount": 2
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false,
+                    "snoozedUntil": null,
+                    "price": 5,
+                    "discount": 0.25
+                }
+            ]
+        }
+    ],
+    "modifierGroups": [
+        {
+            "modGroupId": "modgroup1",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "Chips"
+                },
+                {
+                    "language": 1,
+                    "value": "شيبسى"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "chips desc"
+                },
+                {
+                    "language": 1,
+                    "value": "وصف شيبسى"
+                }
+            ],
+            "max": 0,
+            "min": 0,
+            "modifierIds": [
+                "modsalt",
+                "modcheese",
+                "modtomato"
+            ],
+            "snoozed": false,
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false
+                },
+                {
+                    "channelId": "0197883a-5c16-7a87-bcdd-b1c479da002e",
+                    "snoozed": false
+                }
+            ]
+        }
+    ],
+    "modifiers": [
+        {
+            "modId": "modsalt",
+            "imageUrl": "https://www.brainstormhealth.co.uk/wp-content/uploads/2024/08/SALT.png",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "salt"
+                },
+                {
+                    "language": 1,
+                    "value": "ملح"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "salt desc"
+                },
+                {
+                    "language": 1,
+                    "value": "وصف ملح"
+                }
+            ],
+            "price": 0.75,
+            "snoozed": false,
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false,
+                    "price": 2
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false
+                },
+                {
+                    "channelId": "0197883a-5c16-7a87-bcdd-b1c479da002e",
+                    "snoozed": false
+                }
+            ]
+        },
+        {
+            "modId": "modcheese",
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-qWqNkqNyQoTMtp_dmyucKEuum5AlLOgrRg&s",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "cheese"
+                },
+                {
+                    "language": 1,
+                    "value": "جبن"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "cheese desc"
+                },
+                {
+                    "language": 1,
+                    "value": "وصف جبن"
+                }
+            ],
+            "price": 5,
+            "snoozed": false,
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false
+                },
+                {
+                    "channelId": "0197883a-5c16-7a87-bcdd-b1c479da002e",
+                    "snoozed": false
+                }
+            ]
+        },
+        {
+            "modId": "modtomato",
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-qWqNkqNyQoTMtp_dmyucKEuum5AlLOgrRg&s",
+            "name": [
+                {
+                    "language": 0,
+                    "value": "tomato"
+                },
+                {
+                    "language": 1,
+                    "value": "طماطم"
+                }
+            ],
+            "description": [
+                {
+                    "language": 0,
+                    "value": "tomato desc"
+                },
+                {
+                    "language": 1,
+                    "value": "وصف طماطم"
+                }
+            ],
+            "price": 5,
+            "snoozed": false,
+            "channelConfigurations": [
+                {
+                    "channelId": "0196f85f-b2b7-7007-a7ac-e27943cd9894",
+                    "snoozed": false
+                },
+                {
+                    "channelId": "01971baf-bf4f-7a78-84f4-8529cfb922bd",
+                    "snoozed": false
+                },
+                {
+                    "channelId": "0197883a-5c16-7a87-bcdd-b1c479da002e",
+                    "snoozed": false
+                }
+            ]
+        }
+    ]
+}
