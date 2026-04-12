@@ -1,7 +1,8 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import { join } from 'path';
 import { SnoozeService } from './snooze.service';
-
+import { JwtGuard } from '../auth/guard';
+@UseGuards(JwtGuard)
 @Controller('/')
 export class SnoozeController {
     constructor(private readonly service: SnoozeService){}
