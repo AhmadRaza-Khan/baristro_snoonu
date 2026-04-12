@@ -1,0 +1,4 @@
+await this.handler.odooApiHandler('/api/create-order', 'POST', {
+  name: 'Test Order',
+  amount: 100,
+});

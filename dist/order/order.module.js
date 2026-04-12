@@ -10,11 +10,13 @@ exports.OrderModule = void 0;
 const common_1 = require("@nestjs/common");
 const order_controller_1 = require("./order.controller");
 const order_service_1 = require("./order.service");
+const handler_module_1 = require("../handler/handler.module");
 let OrderModule = class OrderModule {
 };
 exports.OrderModule = OrderModule;
 exports.OrderModule = OrderModule = __decorate([
     (0, common_1.Module)({
+        imports: [handler_module_1.HandlerModule],
         controllers: [order_controller_1.OrderController],
         providers: [order_service_1.OrderService]
     })

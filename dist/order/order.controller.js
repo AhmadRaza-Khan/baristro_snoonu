@@ -18,26 +18,8 @@ let OrderController = class OrderController {
     constructor(service) {
         this.service = service;
     }
-    getAllOrders() {
-        return this.service.getAllOrders();
-    }
-    getTodayOrders() {
-        return this.service.getTodayOrders();
-    }
 };
 exports.OrderController = OrderController;
-__decorate([
-    (0, common_1.Get)("orders-all"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], OrderController.prototype, "getAllOrders", null);
-__decorate([
-    (0, common_1.Get)("orders-today"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], OrderController.prototype, "getTodayOrders", null);
 exports.OrderController = OrderController = __decorate([
     (0, common_1.UseGuards)(guard_1.JwtGuard),
     (0, common_1.Controller)('order'),

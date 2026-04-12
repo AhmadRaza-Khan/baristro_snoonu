@@ -54,10 +54,16 @@ let AuthService = class AuthService {
     prisma;
     config;
     jwt;
+    clientEmail;
+    clientPassword;
+    snoonuApiUrl;
     constructor(prisma, config, jwt) {
         this.prisma = prisma;
         this.config = config;
         this.jwt = jwt;
+        this.clientEmail = this.config.get('CLIENT_EMAIL');
+        this.clientPassword = this.config.get('CLIENT_PASSWORD');
+        this.snoonuApiUrl = this.config.get('SNOONU_API_URL');
     }
     async signUp(dto) {
         try {
@@ -65,7 +71,6 @@ let AuthService = class AuthService {
             dto.password = hash;
             const newUser = await this.prisma.user.create({
                 data: {
-                    name: dto.name,
                     username: dto.username,
                     password: dto.password,
                 },
@@ -113,6 +118,45 @@ let AuthService = class AuthService {
             secure: false,
             sameSite: 'strict',
         });
+    }
+    async getToken() {
+        const token = await this.prisma.token.findFirst({
+            where: {
+                email: this.clientEmail,
+                expiration: {
+                    gt: new Date(),
+                },
+            },
+        });
+        if (token) {
+            return token.accessToken;
+        }
+        else {
+            return this.getSnoonuAccessToken();
+        }
+    }
+    async getSnoonuAccessToken() {
+        const payload = {
+            "email": this.clientEmail,
+            "password": this.clientPassword
+        };
+        const response = await fetch(`${this.snoonuApiUrl}/api/v1/users/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to get access token: ${response.statusText}`);
+        }
+        const data = await response.json();
+        await this.prisma.token.upsert({
+            where: { email: this.clientEmail },
+            update: { accessToken: data.accessToken, expiration: data.expiration },
+            create: { email: this.clientEmail, accessToken: data.accessToken, expiration: data.expiration }
+        });
+        return data.accessToken;
     }
 };
 exports.AuthService = AuthService;

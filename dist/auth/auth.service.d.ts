@@ -6,6 +6,9 @@ export declare class AuthService {
     private prisma;
     private config;
     private jwt;
+    private readonly clientEmail;
+    private readonly clientPassword;
+    private readonly snoonuApiUrl;
     constructor(prisma: PrismaService, config: ConfigService, jwt: JwtService);
     signUp(dto: SignUpDto): Promise<{
         access_token: string;
@@ -18,4 +21,6 @@ export declare class AuthService {
         access_token: string;
     }>;
     logout(res: any): Promise<void>;
+    getToken(): Promise<any>;
+    getSnoonuAccessToken(): Promise<any>;
 }

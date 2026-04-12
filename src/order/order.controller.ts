@@ -6,13 +6,13 @@ import { JwtGuard } from '../auth/guard';
 @Controller('order')
 export class OrderController {
   constructor(private service: OrderService){}
-  @Get("orders-all")
-  getAllOrders(){
-    return this.service.getAllOrders();
-  }
+  // @Get("orders-all")
+  // getAllOrders(){
+  //   return this.service.getAllOrders();
+  // }
 
-  @Get("orders-today")
-  getTodayOrders(){
-    return this.service.getTodayOrders();
-  }
+  // @Get("orders-today")
+  // getTodayOrders(){
+  //   return this.service.getTodayOrders();
+  // }
 }

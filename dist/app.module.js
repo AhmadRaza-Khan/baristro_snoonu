@@ -12,15 +12,11 @@ const auth_module_1 = require("./auth/auth.module");
 const prisma_module_1 = require("./prisma/prisma.module");
 const config_1 = require("@nestjs/config");
 const order_module_1 = require("./order/order.module");
-const product_service_1 = require("./product/product.service");
-const product_controller_1 = require("./product/product.controller");
-const product_module_1 = require("./product/product.module");
-const home_module_1 = require("./home/home.module");
-const serve_static_1 = require("@nestjs/serve-static");
-const path_1 = require("path");
-const inventory_module_1 = require("./inventory/inventory.module");
 const schedule_1 = require("@nestjs/schedule");
 const task_module_1 = require("./task/task.module");
+const menu_module_1 = require("./menu/menu.module");
+const snooze_module_1 = require("./snooze/snooze.module");
+const handler_module_1 = require("./handler/handler.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,20 +30,13 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             prisma_module_1.PrismaModule,
             order_module_1.OrderModule,
-            product_module_1.ProductModule,
-            home_module_1.HomeModule,
-            serve_static_1.ServeStaticModule.forRoot({
-                rootPath: (0, path_1.join)(__dirname, '..', 'public')
-            }),
-            serve_static_1.ServeStaticModule.forRoot({
-                rootPath: (0, path_1.join)(process.cwd(), 'files'),
-                serveRoot: '/files',
-            }),
-            inventory_module_1.InventoryModule,
             task_module_1.TaskModule,
+            menu_module_1.MenuModule,
+            snooze_module_1.SnoozeModule,
+            handler_module_1.HandlerModule,
         ],
-        providers: [product_service_1.ProductService],
-        controllers: [product_controller_1.ProductController],
+        providers: [],
+        controllers: [],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

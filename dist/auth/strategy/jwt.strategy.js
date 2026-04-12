@@ -41,7 +41,6 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             select: {
                 id: true,
                 username: true,
-                name: true,
             },
         });
         return user;

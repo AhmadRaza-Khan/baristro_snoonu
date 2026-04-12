@@ -13,9 +13,9 @@ export class AuthService {
     private readonly clientPassword: string;
     private readonly snoonuApiUrl: string;
     constructor(private prisma: PrismaService, private config: ConfigService, private jwt: JwtService) {
-        this.clientEmail = this.config.get<string>('CLIENT_EMAIL');
-        this.clientPassword = this.config.get<string>('CLIENT_PASSWORD');
-        this.snoonuApiUrl = this.config.get<string>('SNOONU_API_URL');
+        this.clientEmail = this.config.get<string>('CLIENT_EMAIL')!;
+        this.clientPassword = this.config.get<string>('CLIENT_PASSWORD')!;
+        this.snoonuApiUrl = this.config.get<string>('SNOONU_API_URL')!;
     }
     async signUp(dto: SignUpDto){
         try {
@@ -23,7 +23,6 @@ export class AuthService {
             dto.password = hash;
             const newUser = await this.prisma.user.create({
                 data: {
-                    name: dto.name,
                     username: dto.username,
                     password: dto.password,
                 },

@@ -11,25 +11,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TaskService = void 0;
 const common_1 = require("@nestjs/common");
-const inventory_service_1 = require("../inventory/inventory.service");
-const product_service_1 = require("../product/product.service");
 let TaskService = class TaskService {
-    productService;
-    inventoryService;
-    constructor(productService, inventoryService) {
-        this.productService = productService;
-        this.inventoryService = inventoryService;
-    }
-    async handleInventory() {
-        return this.inventoryService.stockUpdateInDB();
-    }
-    async hangleDocs() {
-        return this.productService.getProductDocuments();
-    }
+    constructor() { }
 };
 exports.TaskService = TaskService;
 exports.TaskService = TaskService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [product_service_1.ProductService, inventory_service_1.InventoryService])
+    __metadata("design:paramtypes", [])
 ], TaskService);
 //# sourceMappingURL=task.service.js.map

@@ -1,26 +1,11 @@
 import { ConfigService } from '@nestjs/config';
+import { HandlerService } from '../handler/handler.service';
 export declare class OrderService {
     private readonly config;
+    private readonly handler;
     private readonly shop;
     private readonly token;
-    private get headers();
-    constructor(config: ConfigService);
-    getAllOrders(): Promise<{
-        name: string;
-        email: string;
-        phone: string;
-        price: string;
-        address: string;
-        status: string;
-        items: string[];
-    }[]>;
-    getTodayOrders(): Promise<{
-        name: string;
-        email: string;
-        phone: string;
-        price: string;
-        address: string;
-        status: string;
-        items: string[];
-    }[]>;
+    constructor(config: ConfigService, handler: HandlerService);
+    placeOrderWebhook(): Promise<any>;
+    cancelOrderWebhook(): Promise<any>;
 }
