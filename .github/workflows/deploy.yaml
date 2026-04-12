@@ -29,4 +29,5 @@ jobs:
 
             npm run build
 
-            pm2 restart nest-app
+            pm2 start dist/main.js --name nest-app
+            pm2 save
