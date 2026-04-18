@@ -9,4 +9,14 @@ export class MenuController {
     async saveCategories(){
         return this.service.saveCategoriesToDB();
     }
+
+    @Get("/products")
+    async saveProducts(){
+        return this.service.saveProductsToDB();
+    }
+
+    @Get("/channels")
+    async getChannelIds(){
+        return this.service.getChannelIds();
+    }
 }

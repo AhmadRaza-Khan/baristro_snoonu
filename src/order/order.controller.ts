@@ -15,4 +15,14 @@ export class OrderController {
   // getTodayOrders(){
   //   return this.service.getTodayOrders();
   // }
+
+  @Get("/place")
+  async placeOrder(){
+    return await this.service.placeOrderWebhook()
+  }
+
+  @Get("/cancel")
+  async cancelOrder(){
+    return await this.service.cancelOrderWebhook()
+  }
 }

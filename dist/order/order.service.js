@@ -39,7 +39,7 @@ let OrderService = class OrderService {
             "pos_reference": "SNOONU-001",
             "lines": [
                 {
-                    "product_id": 38,
+                    "product_id": 721,
                     "qty": 1,
                     "price_unit": 120.0,
                     "discount": 10.0,
@@ -56,7 +56,7 @@ let OrderService = class OrderService {
             "snoonu_ref": "001",
             "reason": "Customer cancelled"
         };
-        const response = await this.handler.odooApiHandler('/api/pos/create-order', 'POST', payload);
+        const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', payload);
         return response;
     }
 };

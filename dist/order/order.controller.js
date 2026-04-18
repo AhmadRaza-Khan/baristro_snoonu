@@ -18,8 +18,26 @@ let OrderController = class OrderController {
     constructor(service) {
         this.service = service;
     }
+    async placeOrder() {
+        return await this.service.placeOrderWebhook();
+    }
+    async cancelOrder() {
+        return await this.service.cancelOrderWebhook();
+    }
 };
 exports.OrderController = OrderController;
+__decorate([
+    (0, common_1.Get)("/place"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "placeOrder", null);
+__decorate([
+    (0, common_1.Get)("/cancel"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "cancelOrder", null);
 exports.OrderController = OrderController = __decorate([
     (0, common_1.UseGuards)(guard_1.JwtGuard),
     (0, common_1.Controller)('order'),

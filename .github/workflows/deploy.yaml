@@ -19,15 +19,15 @@ jobs:
           script: |
             cd /var/www/app
 
-            git pull origin main
+            git fetch --all
+            git reset --hard origin/main
+            git clean -fd
 
             npm install
             npm run build:css
             npx prisma generate
             npx prisma migrate deploy
 
-
             npm run build
 
-            pm2 start dist/main.js --name nest-app
-            pm2 save
+            pm2 restart nest-app || pm2 start dist/main.js --name nest-app

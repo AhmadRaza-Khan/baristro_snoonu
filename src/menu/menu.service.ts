@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { HandlerService } from '../handler/handler.service';
 
@@ -38,6 +38,16 @@ export class MenuService {
         const payload = {};
         try {
             const response = await this.handler.apiHandler("api/v1/menu/save", "POST", payload);
+            return response;
+        } catch (error) {
+            console.error('Error saving menu:', error);
+            throw error;
+        }
+    }
+
+    async getChannelIds(): Promise<any> {
+        try {
+            const response = await this.handler.apiHandler("/api/v1/channels/list", "GET");
             return response;
         } catch (error) {
             console.error('Error saving menu:', error);

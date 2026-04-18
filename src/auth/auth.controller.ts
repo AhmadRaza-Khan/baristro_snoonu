@@ -41,5 +41,10 @@ export class AuthController {
     async logout(@Res() res: Response){
         this.authService.logout(res);
         return res.json({  success: true, status:200, message: 'Logged out successfully' });
-  }
+    }
+
+    @Get("/test")
+    async getToken(){
+        return this.authService.getToken();
+    }
 }
