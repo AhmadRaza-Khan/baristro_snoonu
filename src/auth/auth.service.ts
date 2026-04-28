@@ -115,8 +115,8 @@ export class AuthService {
         });
         return data.accessToken;
        } catch (error: any) {
-        console.log(`Error occurred while fetching access token: \n ${error.message}`);
-        throw new Error(`Failed to get access token: ${error.message}`);
+        console.log(`Error occurred while fetching access token: \n ${error}`);
+        throw new Error(`Failed to get access token: ${error}`);
        }
     }
 
