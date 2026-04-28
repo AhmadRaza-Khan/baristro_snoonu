@@ -136,27 +136,34 @@ let AuthService = class AuthService {
         }
     }
     async getSnoonuAccessToken() {
-        const payload = {
-            "email": this.clientEmail,
-            "password": this.clientPassword
-        };
-        const response = await fetch(`${this.snoonuApiUrl}/api/v1/users/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-            throw new Error(`Failed to get access token: ${response.statusText}`);
+        try {
+            const payload = {
+                "email": this.clientEmail,
+                "password": this.clientPassword
+            };
+            const response = await fetch(`${this.snoonuApiUrl}/api/v1/users/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to get access token: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('Received access token response:', data);
+            await this.prisma.token.upsert({
+                where: { email: this.clientEmail },
+                update: { accessToken: data.accessToken, expiration: data.expiration },
+                create: { email: this.clientEmail, accessToken: data.accessToken, expiration: data.expiration }
+            });
+            return data.accessToken;
         }
-        const data = await response.json();
-        await this.prisma.token.upsert({
-            where: { email: this.clientEmail },
-            update: { accessToken: data.accessToken, expiration: data.expiration },
-            create: { email: this.clientEmail, accessToken: data.accessToken, expiration: data.expiration }
-        });
-        return data.accessToken;
+        catch (error) {
+            console.log(`Error occurred while fetching access token: \n ${error}`);
+            throw new Error(`Failed to get access token: ${error}`);
+        }
     }
 };
 exports.AuthService = AuthService;

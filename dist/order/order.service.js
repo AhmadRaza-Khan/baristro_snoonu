@@ -59,6 +59,9 @@ let OrderService = class OrderService {
         const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', payload);
         return response;
     }
+    async rejectOrderWebhook(payload) { }
+    async acceptOrderWebhook(payload) { }
+    async readyForPickupWebhook(payload) { }
 };
 exports.OrderService = OrderService;
 exports.OrderService = OrderService = __decorate([

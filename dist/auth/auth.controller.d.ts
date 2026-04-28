@@ -8,4 +8,5 @@ export declare class AuthController {
     signIn(dto: SignInDto, res: Response): Promise<Response<any, Record<string, any>>>;
     signInPage(res: Response): any;
     logout(res: Response): Promise<Response<any, Record<string, any>>>;
+    getToken(): Promise<any>;
 }

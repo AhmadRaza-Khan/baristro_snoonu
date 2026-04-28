@@ -8,4 +8,7 @@ export declare class OrderService {
     constructor(config: ConfigService, handler: HandlerService);
     placeOrderWebhook(): Promise<any>;
     cancelOrderWebhook(): Promise<any>;
+    rejectOrderWebhook(payload: any): Promise<any>;
+    acceptOrderWebhook(payload: any): Promise<any>;
+    readyForPickupWebhook(payload: any): Promise<any>;
 }

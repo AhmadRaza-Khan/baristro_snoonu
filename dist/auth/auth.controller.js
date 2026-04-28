@@ -50,6 +50,9 @@ let AuthController = class AuthController {
         this.authService.logout(res);
         return res.json({ success: true, status: 200, message: 'Logged out successfully' });
     }
+    async getToken() {
+        return this.authService.getToken();
+    }
 };
 exports.AuthController = AuthController;
 __decorate([
@@ -82,6 +85,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "logout", null);
+__decorate([
+    (0, common_1.Get)("/test"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getToken", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])
