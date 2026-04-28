@@ -90,6 +90,7 @@ export class AuthService {
     }
 
     async getSnoonuAccessToken(): Promise<any> {
+       try {
         const payload = {
             "email": this.clientEmail,
             "password": this.clientPassword               
@@ -105,6 +106,7 @@ export class AuthService {
             throw new Error(`Failed to get access token: ${response.statusText}`);
         }
         const data = await response.json();
+        console.log('Received access token response:', data);
 
         await this.prisma.token.upsert({
             where: { email: this.clientEmail },
@@ -112,6 +114,10 @@ export class AuthService {
             create: { email: this.clientEmail, accessToken: data.accessToken, expiration: data.expiration }
         });
         return data.accessToken;
+       } catch (error: any) {
+        console.log(`Error occurred while fetching access token: \n ${error.message}`);
+        throw new Error(`Failed to get access token: ${error.message}`);
+       }
     }
 
 }
