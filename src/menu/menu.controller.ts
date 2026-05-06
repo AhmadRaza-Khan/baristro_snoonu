@@ -19,4 +19,9 @@ export class MenuController {
     async getChannelIds(){
         return this.service.getChannelIds();
     }
+
+    @Get("/save")
+    async saveMenu(){
+        return this.service.saveMenu();
+    }
 }

@@ -1,6 +1,6 @@
 const navbar = `
 <div class="navbar-start">
-    <a class="text-accent font-bold text-sm md:text-md lg:text-lg xl:text-xl 2xl:text-2xl">Voltaik</a>
+    <a class="text-accent font-bold text-sm md:text-md lg:text-lg xl:text-xl 2xl:text-2xl">Baristro</a>
   </div>
   <div id="search-bar" class="hidden navbar-center w-52 md:w-60 lg:w-96 xl:w-96 2xl:w-1/3 relative">
     <input id="searchBar" type="text" placeholder="Search categories and subcategories here!" class="input text-accent input-accent w-full" autocomplete="off" />
