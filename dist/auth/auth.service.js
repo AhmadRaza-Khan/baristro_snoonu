@@ -124,45 +124,42 @@ let AuthService = class AuthService {
             where: {
                 email: this.clientEmail,
                 expiration: {
-                    gt: new Date(),
+                    gt: new Date(Date.now() + 5 * 60 * 1000),
                 },
             },
         });
         if (token) {
             return token.accessToken;
         }
-        else {
-            return this.getSnoonuAccessToken();
-        }
+        return this.getSnoonuAccessToken();
     }
     async getSnoonuAccessToken() {
         try {
-            const payload = {
-                "email": this.clientEmail,
-                "password": this.clientPassword
-            };
             const response = await fetch(`${this.snoonuApiUrl}/api/v1/users/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: this.clientEmail, password: this.clientPassword }),
             });
             if (!response.ok) {
-                throw new Error(`Failed to get access token: ${response.statusText}`);
+                throw new Error(`Snoonu login HTTP error: ${response.status} ${response.statusText}`);
             }
-            const data = await response.json();
-            console.log('Received access token response:', data);
+            const body = await response.json();
+            if (!body.isSuccess || !body.data?.accessToken) {
+                throw new Error(`Snoonu login failed: ${JSON.stringify(body)}`);
+            }
+            const { accessToken } = body.data;
+            const serverExpiration = new Date(Date.now() + 3 * 60 * 60 * 1000);
             await this.prisma.token.upsert({
                 where: { email: this.clientEmail },
-                update: { accessToken: data.accessToken, expiration: data.expiration },
-                create: { email: this.clientEmail, accessToken: data.accessToken, expiration: data.expiration }
+                update: { accessToken, expiration: serverExpiration },
+                create: { email: this.clientEmail, accessToken, expiration: serverExpiration },
             });
-            return data.accessToken;
+            console.log(`Snoonu token refreshed. Expires at: ${serverExpiration.toISOString()}`);
+            return accessToken;
         }
         catch (error) {
-            console.log(`Error occurred while fetching access token: \n ${error}`);
-            throw new Error(`Failed to get access token: ${error}`);
+            console.error(`Failed to fetch Snoonu access token: ${error.message}`);
+            throw new Error(`Failed to fetch Snoonu access token: ${error.message}`);
         }
     }
 };
