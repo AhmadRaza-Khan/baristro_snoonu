@@ -59,6 +59,28 @@ export class MenuService {
         return { message: 'Use /snooze/products to fetch products.' };
     }
 
+    async listProducts(): Promise<any> {
+        return this.prisma.product.findMany({ orderBy: { productId: 'asc' } });
+    }
+
+    async deleteProduct(productId: number): Promise<any> {
+        const existing = await this.prisma.product.findUnique({ where: { productId } });
+        if (!existing) return { success: false, message: 'Product not found' };
+        await this.prisma.product.delete({ where: { productId } });
+        return { success: true };
+    }
+
+    async listCategories(): Promise<any> {
+        return this.prisma.category.findMany({ orderBy: { categoryId: 'asc' } });
+    }
+
+    async deleteCategory(categoryId: number): Promise<any> {
+        const existing = await this.prisma.category.findUnique({ where: { categoryId } });
+        if (!existing) return { success: false, message: 'Category not found' };
+        await this.prisma.category.delete({ where: { categoryId } });
+        return { success: true };
+    }
+
     async getChannelIds(): Promise<any> {
         try {
             const response = await this.handler.apiHandler("/api/v1/channels/list", "GET");
