@@ -13,51 +13,85 @@ exports.OrderService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const handler_service_1 = require("../handler/handler.service");
+const prisma_service_1 = require("../prisma/prisma.service");
 let OrderService = class OrderService {
     config;
     handler;
+    prisma;
     shop;
     token;
-    constructor(config, handler) {
+    constructor(config, handler, prisma) {
         this.config = config;
         this.handler = handler;
+        this.prisma = prisma;
         this.shop = this.config.get("SHOPIFY_URL");
         this.token = this.config.get("SHOPIFY_API_SECRET");
     }
     async placeOrderWebhook(payload) {
-        const products = payload.products.map((product) => {
-            const modifiers = product.modifierGroups.flatMap((group) => group.modifiers);
-            return {
-                product_id: Number(product.productId),
-                qty: product.quantity,
-                price_unit: product.price,
-                discount: product.discountAmount,
-                price_subtotal: product.price * product.quantity - product.discountAmount,
-                price_subtotal_incl: product.price * product.quantity - product.discountAmount
+        try {
+            const products = payload.products.map((product) => {
+                const modifiers = product.modifierGroups.flatMap((group) => group.modifiers);
+                return {
+                    product_id: Number(product.productId),
+                    qty: product.quantity,
+                    price_unit: product.price,
+                    discount: product.discountAmount,
+                    price_subtotal: product.price * product.quantity - product.discountAmount,
+                    price_subtotal_incl: product.price * product.quantity - product.discountAmount
+                };
+            });
+            const data = {
+                "snoonu_ref": payload.orderId,
+                "customer_name": payload.customer.name,
+                "phone": payload.customer.phoneNumber,
+                "email": payload.customer.email,
+                "street": payload.deliveryAddress.description,
+                "city": payload.deliveryAddress.state,
+                "amount_tax": 0,
+                "amount_total": payload.payment.amount,
+                "amount_paid": payload.payment.totalPaid,
+                "amount_return": 0,
+                "pos_reference": `SNOONU-${payload.orderId}`,
+                "pickup_time": payload.pickupTime,
+                "lines": products
             };
-        });
-        const data = {
-            "snoonu_ref": payload.orderId,
-            "customer_name": payload.customer.name,
-            "phone": payload.customer.phoneNumber,
-            "email": payload.customer.email,
-            "street": payload.deliveryAddress.description,
-            "city": payload.deliveryAddress.state,
-            "amount_tax": 0,
-            "amount_total": payload.payment.amount,
-            "amount_paid": payload.payment.totalPaid,
-            "amount_return": 0,
-            "pos_reference": `SNOONU-${payload.orderId}`,
-            "pickup_time": payload.pickupTime,
-            "lines": products
-        };
-        const response = await this.handler.odooApiHandler('/api/pos/create-order', 'POST', data);
-        console.log('Order placed in Odoo with response:', response);
-        return response;
+            const response = await this.handler.odooApiHandler('/api/pos/create-order', 'POST', data);
+            if (response && response.status == "success") {
+                console.log('Order successfully created in Odoo with response:', response);
+                await this.prisma.order.create({
+                    data: {
+                        snoonu_id: String(payload.orderId),
+                        odoo_id: String(response.order_id),
+                        status: "validated"
+                    }
+                });
+                return { success: true, message: "Order validdated successfully!" };
+            }
+            else {
+                console.log('Failed to create order in Odoo. Response:', response);
+                return { success: false, message: "Failed to validate order" };
+            }
+        }
+        catch (error) {
+            console.log("Error placing order:", error.message);
+            return { success: false, message: "Failed to place order" };
+        }
     }
     async cancelOrderWebhook(payload) {
-        const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', payload);
-        return response;
+        try {
+            const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', payload);
+            if (response && response.status == "success") {
+                console.log('Order successfully cancelled in Odoo with response:', response);
+                if (!payload.orderId)
+                    return { success: false, message: "Order ID is required for cancellation" };
+                await this.prisma.order.delete({
+                    where: { snoonu_id: String(payload.orderId) }
+                });
+            }
+        }
+        catch (error) {
+            console.error("Error cancelling order:", error.message);
+        }
     }
     async rejectOrderWebhook(payload) {
         const { order_id, order_name } = payload;
@@ -78,6 +112,6 @@ let OrderService = class OrderService {
 exports.OrderService = OrderService;
 exports.OrderService = OrderService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [config_1.ConfigService, handler_service_1.HandlerService])
+    __metadata("design:paramtypes", [config_1.ConfigService, handler_service_1.HandlerService, prisma_service_1.PrismaService])
 ], OrderService);
 //# sourceMappingURL=order.service.js.map

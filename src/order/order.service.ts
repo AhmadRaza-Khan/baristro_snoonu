@@ -49,7 +49,7 @@ export class OrderService {
     }
 
     const response = await this.handler.odooApiHandler('/api/pos/create-order', 'POST', data);
-    if (response && response.success == "success"){
+    if (response && response.status == "success"){
       // add logic to send status as validated to snoonu
       console.log('Order successfully created in Odoo with response:', response);
 
@@ -74,7 +74,7 @@ export class OrderService {
   async cancelOrderWebhook(payload: any): Promise<any> {
     try {
       const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', payload);
-      if(response && response.success == "success"){
+      if(response && response.status == "success"){
         console.log('Order successfully cancelled in Odoo with response:', response);
         if(!payload.orderId) return { success: false, message: "Order ID is required for cancellation" };
         await this.prisma.order.delete({
