@@ -56,7 +56,7 @@ export class MenuService {
     }
 
     async saveMenu(): Promise<any> {
-        return { message: 'Use /snooze/products to fetch products.' };
+        return await this.prisma.category.findMany({});
     }
 
     async listProducts(): Promise<any> {
@@ -83,7 +83,7 @@ export class MenuService {
 
     async getChannelIds(): Promise<any> {
         try {
-            const response = await this.handler.apiHandler("/api/v1/channels/list", "GET");
+            const response = await this.handler.apiHandler("/api/v1/channels/list", "POST");
             return response;
         } catch (error) {
             console.error('Error saving menu:', error);

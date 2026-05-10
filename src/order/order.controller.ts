@@ -1,28 +1,33 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { JwtGuard } from '../auth/guard';
+import { OdooWebhookDto } from './dto';
 
-@UseGuards(JwtGuard)
 @Controller('order')
 export class OrderController {
   constructor(private service: OrderService){}
-  // @Get("orders-all")
-  // getAllOrders(){
-  //   return this.service.getAllOrders();
-  // }
 
-  // @Get("orders-today")
-  // getTodayOrders(){
-  //   return this.service.getTodayOrders();
-  // }
-
-  @Get("/place")
-  async placeOrder(){
-    return await this.service.placeOrderWebhook()
+  @Post("/place")
+  async placeOrder(@Body() payload: any){
+    return await this.service.placeOrderWebhook(payload);
   }
 
-  @Get("/cancel")
-  async cancelOrder(){
-    return await this.service.cancelOrderWebhook()
+  @Post("/cancel")
+  async cancelOrder(@Body() payload: any){
+    return await this.service.cancelOrderWebhook(payload);
+  }
+
+  @Post("loaded")
+  async orderLoaded(@Body() dto: OdooWebhookDto){
+    return await this.service.acceptOrderWebhook(dto);
+  }
+
+  @Post("rejected")
+  async orderRejected(@Body() dto: OdooWebhookDto){
+    return await this.service.rejectOrderWebhook(dto);
+  }
+
+  @Post("paid")
+  async orderPaid(@Body() dto: OdooWebhookDto){
+    return await this.service.readyForPickupWebhook(dto);
   }
 }

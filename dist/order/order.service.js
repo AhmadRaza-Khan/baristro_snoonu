@@ -24,44 +24,56 @@ let OrderService = class OrderService {
         this.shop = this.config.get("SHOPIFY_URL");
         this.token = this.config.get("SHOPIFY_API_SECRET");
     }
-    async placeOrderWebhook() {
-        const payload = {
-            "snoonu_ref": "002",
-            "customer_name": "Snoonu",
-            "phone": "+57349539457",
-            "email": "snoonu@test.com",
-            "street": "Abc, Raji Mansion",
-            "city": "Doha",
-            "amount_tax": 1,
-            "amount_total": 91,
-            "amount_paid": 91,
+    async placeOrderWebhook(payload) {
+        const products = payload.products.map((product) => {
+            const modifiers = product.modifierGroups.flatMap((group) => group.modifiers);
+            return {
+                product_id: Number(product.productId),
+                qty: product.quantity,
+                price_unit: product.price,
+                discount: product.discountAmount,
+                price_subtotal: product.price * product.quantity - product.discountAmount,
+                price_subtotal_incl: product.price * product.quantity - product.discountAmount
+            };
+        });
+        const data = {
+            "snoonu_ref": payload.orderId,
+            "customer_name": payload.customer.name,
+            "phone": payload.customer.phoneNumber,
+            "email": payload.customer.email,
+            "street": payload.deliveryAddress.description,
+            "city": payload.deliveryAddress.state,
+            "amount_tax": 0,
+            "amount_total": payload.payment.amount,
+            "amount_paid": payload.payment.totalPaid,
             "amount_return": 0,
-            "pos_reference": "SNOONU-001",
-            "lines": [
-                {
-                    "product_id": 721,
-                    "qty": 1,
-                    "price_unit": 120.0,
-                    "discount": 10.0,
-                    "price_subtotal": 110.0,
-                    "price_subtotal_incl": 110.0
-                }
-            ]
+            "pos_reference": `SNOONU-${payload.orderId}`,
+            "pickup_time": payload.pickupTime,
+            "lines": products
         };
-        const response = await this.handler.odooApiHandler('/api/pos/create-order', 'POST', payload);
+        const response = await this.handler.odooApiHandler('/api/pos/create-order', 'POST', data);
+        console.log('Order placed in Odoo with response:', response);
         return response;
     }
-    async cancelOrderWebhook() {
-        const payload = {
-            "snoonu_ref": "001",
-            "reason": "Customer cancelled"
-        };
+    async cancelOrderWebhook(payload) {
         const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', payload);
         return response;
     }
-    async rejectOrderWebhook(payload) { }
-    async acceptOrderWebhook(payload) { }
-    async readyForPickupWebhook(payload) { }
+    async rejectOrderWebhook(payload) {
+        const { order_id, order_name } = payload;
+        console.log(`Order ${order_name} with ID ${order_id} has been rejected.`);
+        return { success: true, message: "Webhook received for order rejection" };
+    }
+    async acceptOrderWebhook(payload) {
+        const { order_id, order_name } = payload;
+        console.log(`Order ${order_name} with ID ${order_id} has been accepted.`);
+        return { success: true, message: "Webhook received for order acceptance" };
+    }
+    async readyForPickupWebhook(payload) {
+        const { order_id, order_name } = payload;
+        console.log(`Order ${order_name} with ID ${order_id} is ready for pickup.`);
+        return { success: true, message: "Webhook received for order ready for pickup" };
+    }
 };
 exports.OrderService = OrderService;
 exports.OrderService = OrderService = __decorate([

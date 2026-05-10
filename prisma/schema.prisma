@@ -14,8 +14,8 @@ model User {
 }
 
 model Token {
-  id          Int    @id @default(autoincrement())
-  email       String @unique
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
   accessToken String
   expiration  DateTime
 }
@@ -34,12 +34,19 @@ model Category {
 model Product {
   id            Int      @id @default(autoincrement())
   productId     Int      @unique
-  productNameEn String
-  productNameAr String   @default("")
   imageUrl      String   @default("")
   variants      Json     @default("[]")
   isSynced      Boolean  @default(false)
   isSnoozed     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  productNameAr String   @default("")
+  productNameEn String
+}
+
+model Order {
+  id        Int     @id @default(autoincrement())
+  snoonu_id String  @unique
+  odoo_id   String  @unique
+  status    String?
 }
