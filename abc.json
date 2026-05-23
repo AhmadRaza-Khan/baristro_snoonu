@@ -1,0 +1,76 @@
+{
+  "channelName" : "externalname",
+  "channelId" : "channelId",
+  "orderId" : 10084452,
+  "by" : "SN",
+  "orderType" : 1,
+  "note" : null,
+  "isScheduler" : false,
+  "createdAt" : "2025-04-30T10:53:01.487734Z",
+  "pickupTime" : "2025-04-30T11:08:01.487734Z",
+  "isDeliveryBySnoonu" : true,
+  "customer" : {
+    "name" : "test",
+    "phoneNumber" : "+97421343339",
+    "email" : "test@gmail.com",
+    "carDetail" : null
+  },
+  "deliveryAddress" : {
+    "description" : "Gharrafat Al Rayyan, Ar-Rayyan, Zone 51, Al Rayyan Municipality, Qatar. , B12",
+    "state" : "Ad Dawhah",
+    "country" : "Qatar",
+    "notes" : "",
+    "flatNumber" : null,
+    "building" : null,
+    "coordinate" : {
+      "latitude" : 25.3325814,
+      "longitude" : 51.44670929999999
+    }
+  },
+  "payment" : {
+    "amount" : 11600,
+    "totalPaid" : 0,
+    "totalUnPaid" : 11600,
+    "types" : [ 0 ],
+    "currency" : "QAR"
+  },
+  "products" : [ {
+    "productId" : "618",
+    "name" : "2 For 40 Mighty Steakhouse Meal",
+    "price" : 0,
+    "originalPrice": 0,
+    "discountAmount": 0,
+    "quantity" : 2,
+    "remark" : "",
+    "modifierGroups" : [ {
+      "id" : "",
+      "name" : "Your Choice of Meal",
+      "modifiers" : [ {
+        "id" : "10",
+        "name" : "Oat Milk",
+        "price" : 4000,
+        "quantity" : 1
+      },
+      {
+        "id" : "11",
+        "name" : "Coconut Milk",
+        "price" : 4000,
+        "quantity" : 1
+      } 
+     ]
+    }]
+  } ],
+  "totalDiscount" : 0,
+  "deliveryFee" : 2000,
+  "promotions" : [ {
+    "code" : "PIPETEST",
+    "amountBeforePromotion" : 4800,
+    "amountAfterPromotion" : 3550,
+    "type" : 1
+  }, {
+    "code" : "PIPETEST",
+    "amountBeforePromotion" : 2000,
+    "amountAfterPromotion" : 2000,
+    "type" : 0
+  } ]
+}

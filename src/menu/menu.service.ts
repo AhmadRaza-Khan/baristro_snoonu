@@ -14,18 +14,19 @@ export class MenuService {
 
     async saveCategoriesToDB(): Promise<any> {
         try {
-            const response = await this.handler.odooApiHandler('/api/pos/categs', 'GET');
-            const categories: { category_id: number; category_name: string; products: any[] }[] = response?.data ?? [];
+            const response = await this.prisma.category.findMany({});
+            return response;
+            // const categories: { category_id: number; category_name: string; products: any[] }[] = response?.data ?? [];
 
-            for (const cat of categories) {
-                await this.prisma.category.upsert({
-                    where: { categoryId: cat.category_id },
-                    create: { categoryId: cat.category_id, categoryName: cat.category_name, products: cat.products },
-                    update: { categoryName: cat.category_name, products: cat.products },
-                });
-            }
+            // for (const cat of categories) {
+            //     await this.prisma.category.upsert({
+            //         where: { categoryId: cat.category_id },
+            //         create: { categoryId: cat.category_id, categoryName: cat.category_name, products: cat.products },
+            //         update: { categoryName: cat.category_name, products: cat.products },
+            //     });
+            // }
 
-            return { success: true, saved: categories.length };
+            // return { success: true, saved: categories.length };
         } catch (error: any) {
             console.log(`Error occurred during saving categories to database: \n ${error.message}`);
             return { success: false, message: `Error occurred during saving categories to database: \n ${error.message}` }
@@ -34,21 +35,18 @@ export class MenuService {
 
     async saveProductsToDB(): Promise<any> {
         try {
-            const response = await this.handler.odooApiHandler('/api/pos/products', 'GET');
-            const products: { id: number; productName: string; imageUrl: string; variants: { name: { en: string; ar: string }; [key: string]: any }[] }[] = response?.products ?? [];
+            const response = await this.prisma.product.findFirst({ where: { productId:  618}});
+            return response;
+            // await Promise.all((response?.products ?? []).map(async (product: any) => {
+            //     const attributes = product.attributes || [];
 
-            for (const product of products) {
-                const productNameEn = product.productName;
-                const productNameAr = product.variants[0]?.name?.ar ?? '';
+            //     await this.prisma.product.updateMany({
+            //         where: { productId: product.id },
+            //         data: { attributes, productNameEn: product.product_name_en, productNameAr: product.product_name_ar, imageUrl: product.image_url, variants: product.variants},
+            //     });
+            // }));
 
-                await this.prisma.product.upsert({
-                    where: { productId: product.id },
-                    create: { productId: product.id, productNameEn, productNameAr, imageUrl: product.imageUrl ?? '', variants: product.variants },
-                    update: { productNameEn, productNameAr, imageUrl: product.imageUrl ?? '', variants: product.variants },
-                });
-            }
-
-            return { success: true, saved: products.length };
+            // return { success: true };
         } catch (error: any) {
             console.log(`Error occurred during saving products to database: \n ${error.message}`);
             return { success: false, message: `Error occurred during saving products to database: \n ${error.message}` }
@@ -56,7 +54,230 @@ export class MenuService {
     }
 
     async saveMenu(): Promise<any> {
-        return await this.prisma.category.findMany({});
+        try {
+            const channelId = this.config.get<string>('CHANNELL_ID')!;
+            const posId = this.config.get<string>('POS_ID')!;
+            const menuName = this.config.get<string>('MENU_NAME') ?? 'Menu';
+            const menuNameAr = this.config.get<string>('MENU_NAME_AR') ?? 'قائمة';
+            const menuImageUrl = this.config.get<string>('MENU_IMAGE_URL') ?? '';
+
+            const [allProducts, categories] = await Promise.all([
+                this.prisma.product.findMany({ where: { isSynced: false } }),
+                this.prisma.category.findMany({}),
+            ]);
+
+            const isBilingual = (en: string, ar: string) =>
+                !!en && !!ar && en.trim() !== ar.trim();
+
+            const products = allProducts.filter(p => {
+                if (!p.imageUrl) return false;
+                if (!isBilingual(p.productNameEn, p.productNameAr)) return false;
+
+                const variants = (p.variants as any[]) ?? [];
+                if (!variants.length) return false;
+                if (!variants.every((v: any) => isBilingual(v.name?.en, v.name?.ar))) return false;
+
+                const attrs = (p.attributes as any[]) ?? [];
+                return attrs.every((a: any) =>
+                    isBilingual(a.attribute_name?.en, a.attribute_name?.ar) &&
+                    (a.values ?? []).every((v: any) => isBilingual(v.name?.en, v.name?.ar))
+                );
+            });
+
+            if (products.length === 0) {
+                const report = allProducts.map(p => {
+                    const reasons: string[] = [];
+
+                    if (!p.imageUrl) reasons.push('Missing product image');
+                    if (!isBilingual(p.productNameEn, p.productNameAr))
+                        reasons.push(`Product name missing Arabic or same as English (en: "${p.productNameEn}", ar: "${p.productNameAr}")`);
+
+                    const variants = (p.variants as any[]) ?? [];
+                    if (!variants.length) {
+                        reasons.push('No variants found');
+                    } else {
+                        variants.forEach((v: any, i: number) => {
+                            if (!isBilingual(v.name?.en, v.name?.ar))
+                                reasons.push(`Variant[${i}] name missing Arabic or same as English (en: "${v.name?.en}", ar: "${v.name?.ar}")`);
+                        });
+                    }
+
+                    const attrs = (p.attributes as any[]) ?? [];
+                    attrs.forEach((a: any) => {
+                        if (!isBilingual(a.attribute_name?.en, a.attribute_name?.ar))
+                            reasons.push(`Attribute "${a.attribute_name?.en}" (id: ${a.attribute_id}) missing Arabic or same as English`);
+                        (a.values ?? []).forEach((v: any) => {
+                            if (!isBilingual(v.name?.en, v.name?.ar))
+                                reasons.push(`Attribute "${a.attribute_name?.en}" → value "${v.name?.en}" (id: ${v.id}) missing Arabic or same as English`);
+                        });
+                    });
+
+                    return { productId: p.productId, name: p.productNameEn, reasons };
+                });
+
+                return { success: false, message: 'No eligible products to sync', products: report };
+            }
+
+            const modGroupMap = new Map<string, any>();
+            const modifierMap = new Map<string, any>();
+
+            for (const product of products) {
+                for (const attrGroup of (product.attributes as any[]) ?? []) {
+                    const groupNameEn = attrGroup.attribute_name?.en || '';
+                    const groupNameAr = attrGroup.attribute_name?.ar || '';
+                    if (!groupNameEn || !groupNameAr || groupNameEn === groupNameAr) continue;
+
+                    const modGroupId = `modgroup${attrGroup.attribute_id}`;
+                    const modifierIds: string[] = [];
+
+                    for (const val of attrGroup.values ?? []) {
+                        const modNameEn = val.name?.en || '';
+                        const modNameAr = val.name?.ar || '';
+                        if (!modNameEn || !modNameAr || modNameEn === modNameAr) continue;
+
+                        const modId = `mod${val.id}`;
+                        modifierIds.push(modId);
+
+                        if (!modifierMap.has(modId)) {
+                            modifierMap.set(modId, {
+                                modId,
+                                imageUrl: product.imageUrl,
+                                name: [
+                                    { language: 0, value: modNameEn },
+                                    { language: 1, value: modNameAr },
+                                ],
+                                description: [
+                                    { language: 0, value: '' },
+                                    { language: 1, value: '' },
+                                ],
+                                price: Number(val.price_extra ?? 0),
+                                snoozed: false,
+                                channelConfigurations: [{ channelId, snoozed: false }],
+                            });
+                        }
+                    }
+
+                    if (modifierIds.length > 0 && !modGroupMap.has(modGroupId)) {
+                        modGroupMap.set(modGroupId, {
+                            modGroupId,
+                            name: [
+                                { language: 0, value: groupNameEn },
+                                { language: 1, value: groupNameAr },
+                            ],
+                            description: [
+                                { language: 0, value: '' },
+                                { language: 1, value: '' },
+                            ],
+                            max: 0,
+                            min: 0,
+                            modifierIds,
+                            snoozed: false,
+                            channelConfigurations: [{ channelId, snoozed: false }],
+                        });
+                    }
+                }
+            }
+
+            const validModifierIds = new Set(modifierMap.keys());
+            const finalModGroups = Array.from(modGroupMap.values())
+                .map((g: any) => ({
+                    ...g,
+                    modifierIds: g.modifierIds.filter((id: string) => validModifierIds.has(id)),
+                }))
+                .filter((g: any) => g.modifierIds.length > 0);
+
+            const finalModGroupIds = new Set(finalModGroups.map((g: any) => g.modGroupId));
+            const eligibleProductIdSet = new Set(products.map(p => String(p.productId)));
+
+            const formattedProducts = products.map((product, i) => {
+                const attrs = (product.attributes as any[]) ?? [];
+                const variants = (product.variants as any[]) ?? [];
+                const price = Number(variants[0]?.price ?? 0);
+                const modifierGroups = attrs
+                    .map((a: any) => `modgroup${a.attribute_id}`)
+                    .filter((id: string) => finalModGroupIds.has(id));
+
+                return {
+                    productId: String(product.productId),
+                    imageUrl: product.imageUrl,
+                    name: [
+                        { language: 0, value: product.productNameEn },
+                        { language: 1, value: product.productNameAr },
+                    ],
+                    description: [
+                        { language: 0, value: variants[0]?.description?.en ?? '' },
+                        { language: 1, value: variants[0]?.description?.ar ?? '' },
+                    ],
+                    price,
+                    defaultDiscount: 0,
+                    sortOrder: i + 1,
+                    modifierGroups,
+                    snoozed: product.isSnoozed,
+                    channelConfigurations: [
+                        {
+                            channelId,
+                            snoozed: product.isSnoozed,
+                            snoozedUntil: null,
+                            price: null,
+                            discount: null,
+                        },
+                    ],
+                };
+            });
+
+            const formattedCategories = categories
+                .map((cat, i) => {
+                    const catProducts = ((cat.products as any[]) ?? [])
+                        .map((p: any) => String(p.id))
+                        .filter((pid: string) => eligibleProductIdSet.has(pid));
+
+                    return {
+                        categoryId: String(cat.categoryId),
+                        name: [
+                            { language: 0, value: cat.categoryName },
+                            { language: 1, value: cat.categoryName },
+                        ],
+                        description: [
+                            { language: 0, value: '' },
+                            { language: 1, value: '' },
+                        ],
+                        imageUrl: '',
+                        products: catProducts,
+                        snoozed: cat.isSnoozed,
+                        sortOrder: i + 1,
+                        channelConfigurations: [{ channelId, snoozed: cat.isSnoozed }],
+                    };
+                })
+                .filter(cat => cat.products.length > 0);
+
+            const menu = {
+                menuId: posId,
+                menuName: [
+                    { language: 0, value: menuName },
+                    { language: 1, value: menuNameAr },
+                ],
+                description: [
+                    { language: 0, value: '' },
+                    { language: 1, value: '' },
+                ],
+                menuImageUrl,
+                currency: 'QR',
+                categories: formattedCategories,
+                products: formattedProducts,
+                modifierGroups: finalModGroups,
+                modifiers: Array.from(modifierMap.values()),
+            };
+
+            const result = await this.handler.apiHandler(`/api/v1/menu/save`, 'POST', menu);
+            await this.prisma.product.updateMany({
+                where: { productId: { in: products.map(p => p.productId) } },
+                data: { isSynced: true },
+            });
+            return { success: true, result };
+        } catch (error: any) {
+            console.error('Error saving menu:', error);
+            return { success: false, message: error.message };
+        }
     }
 
     async listProducts(): Promise<any> {

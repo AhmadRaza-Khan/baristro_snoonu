@@ -16,9 +16,10 @@ export class HandlerService {
         try {
             const url = `${this.snoonuApiUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 
+            const token = await this.authService.getToken();
             const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.authService.getToken()}`,
+            Authorization: `Bearer ${token}`,
             };
 
             const options: RequestInit = {
