@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HandlerService } from '../handler/handler.service';
-import { OdooWebhookDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -237,7 +236,7 @@ export class OrderService {
     }
   }
 
-  async rejectOrderWebhook(payload: OdooWebhookDto): Promise<any> {
+  async rejectOrderWebhook(payload: any): Promise<any> {
     try {
       const webhook = await this.webhookHandler(payload, "rejected", `/api/v1/orders/reject`, 7);
       console.log(`Order ${payload.order_name} with ID ${payload.order_id} has been rejected.`);
@@ -248,7 +247,7 @@ export class OrderService {
     }
   }
 
-  async acceptOrderWebhook(payload: OdooWebhookDto): Promise<any> {
+  async acceptOrderWebhook(payload: any): Promise<any> {
     try {      
       await this.webhookHandler(payload, "accepted", `/api/v1/orders/accept`, 2);
       await this.delay(3000);
@@ -261,7 +260,7 @@ export class OrderService {
     }
   }
 
-  async readyForPickupWebhook(payload: OdooWebhookDto): Promise<any> {
+  async readyForPickupWebhook(payload: any): Promise<any> {
     try {
       await this.webhookHandler(payload, "ready", `/api/v1/orders/ready`, 8);
       console.log(`Order ${payload.order_name} with ID ${payload.order_id} is ready for pickup.`);

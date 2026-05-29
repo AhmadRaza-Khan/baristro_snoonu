@@ -1,6 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { OdooWebhookDto } from './dto';
 
 @Controller('order')
 export class OrderController {
@@ -17,17 +16,17 @@ export class OrderController {
   }
 
   @Post("loaded")
-  async orderLoaded(@Body() dto: OdooWebhookDto){
+  async orderLoaded(@Body() dto: any){
     return await this.service.acceptOrderWebhook(dto);
   }
 
   @Post("rejected")
-  async orderRejected(@Body() dto: OdooWebhookDto){
+  async orderRejected(@Body() dto: any){
     return await this.service.rejectOrderWebhook(dto);
   }
 
   @Post("paid")
-  async orderPaid(@Body() dto: OdooWebhookDto){
+  async orderPaid(@Body() dto: any){
     return await this.service.readyForPickupWebhook(dto);
   }
 }
