@@ -6,9 +6,11 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class OrderService {
   private readonly channelId: string;
+  private readonly posId: string;
 
   constructor(private readonly config: ConfigService, private readonly handler: HandlerService, private readonly prisma: PrismaService){
           this.channelId = this.config.get<string>("CHANNELL_ID")!;
+          this.posId = this.config.get<string>("POS_ID")!;
   }
 
   delay (ms: number){ new Promise(resolve => setTimeout(resolve, ms)) };
@@ -292,6 +294,29 @@ export class OrderService {
     } catch (error: any) {
       console.error("Error rejecting order:", error.message);
       return { success: false, message: "Failed to reject order" };
+    }
+  }
+
+  async registerWebhook(): Promise<any> {
+    const BASE_URL = "https://baristrosnoonu.cyberboost.io";
+    try {
+      const payload = {
+        "id": this.posId,
+        "webhooks": {
+          "orderCreateWebhook": `${BASE_URL}/order/place`,
+          "orderCancelWebhook": `${BASE_URL}/order/cancel`,
+          "menuSyncStatusWebhook": `${BASE_URL}/menu/sync-status`,
+          "orderUpdateWebhook": `${BASE_URL}/order/update`,
+          "orderStatusUpdateWebhook": `${BASE_URL}/order/status`,
+          "loginWebhook": null
+        }
+      }
+      const response = await this.handler.apiHandler('/api/v1/pos/register-webhooks', 'POST', payload);
+      console.log('Webhook registration response:', response);
+      return { success: true, message: response };
+    } catch (error: any) {
+      console.error("Error registering webhooks:", error.message);
+      return { success: false, message: "Failed to register webhooks" };
     }
   }
 }

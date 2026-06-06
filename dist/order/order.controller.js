@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderController = void 0;
 const common_1 = require("@nestjs/common");
 const order_service_1 = require("./order.service");
-const dto_1 = require("./dto");
 let OrderController = class OrderController {
     service;
     constructor(service) {
@@ -35,6 +34,9 @@ let OrderController = class OrderController {
     }
     async orderPaid(dto) {
         return await this.service.readyForPickupWebhook(dto);
+    }
+    async registerWebhook() {
+        return await this.service.registerWebhook();
     }
 };
 exports.OrderController = OrderController;
@@ -56,23 +58,29 @@ __decorate([
     (0, common_1.Post)("loaded"),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [dto_1.OdooWebhookDto]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "orderLoaded", null);
 __decorate([
     (0, common_1.Post)("rejected"),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [dto_1.OdooWebhookDto]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "orderRejected", null);
 __decorate([
     (0, common_1.Post)("paid"),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [dto_1.OdooWebhookDto]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "orderPaid", null);
+__decorate([
+    (0, common_1.Get)("register-webhook"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "registerWebhook", null);
 exports.OrderController = OrderController = __decorate([
     (0, common_1.Controller)('order'),
     __metadata("design:paramtypes", [order_service_1.OrderService])
