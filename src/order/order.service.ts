@@ -312,7 +312,7 @@ export class OrderService {
         }
       }
       const response = await this.handler.apiHandler('/api/v1/pos/register-webhooks', 'POST', payload);
-      console.log('Webhook registration response:', response);
+      console.log('Webhook registration response is :', response);
       return { success: true, message: response };
     } catch (error: any) {
       console.error("Error registering webhooks:", error.message);
