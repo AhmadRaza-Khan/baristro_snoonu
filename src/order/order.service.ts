@@ -109,7 +109,7 @@ export class OrderService {
       const order = await this.prisma.order.findUnique({ where: { snoonu_id: String(payload.orderId) } });
       if (!order) return { success: false, message: `Order ${payload.orderId} not found in database` };
 
-      const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', { partner_ref: `Snoonu-${payload.order_id}`, "reason": payload.cancellationReason });
+      const response = await this.webhookHandler(payload, "cancelled", `/api/v1/orders/cancel`, 7);
       if (response && response.status === "success") {
         console.log('Order successfully cancelled in Odoo with response:', response);
         await this.prisma.order.update({
@@ -203,7 +203,7 @@ export class OrderService {
     const BASE_URL = "https://baristrosnoonu.cyberboost.io";
     try {
       const payload = {
-            "id": "019dd371-0ab8-7b36-a768-c4fc7039737b",
+            "id": "019df1fa-abac-79b5-9937-aa61ad29e29e",
             "webhooks": {
               "menuSyncStatusWebhook": "https://baristrosnoonu.cyberboost.io/menu/sync-status",
               "orderCreateWebhook": "https://baristrosnoonu.cyberboost.io/order/place",

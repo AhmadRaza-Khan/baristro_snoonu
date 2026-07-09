@@ -43,6 +43,9 @@ let OrderController = class OrderController {
     async orderPaid(dto) {
         return await this.service.readyForPickupWebhook(dto);
     }
+    async orderDelivered(dto) {
+        return await this.service.deliveryOrderWebhook(dto);
+    }
     async registerWebhook() {
         return await this.service.registerWebhook();
     }
@@ -97,6 +100,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "orderPaid", null);
+__decorate([
+    (0, common_1.Post)("delivered"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "orderDelivered", null);
 __decorate([
     (0, common_1.Get)("register-webhook"),
     __metadata("design:type", Function),

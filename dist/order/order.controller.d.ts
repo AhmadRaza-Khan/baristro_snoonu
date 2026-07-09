@@ -13,5 +13,6 @@ export declare class OrderController {
     orderLoaded(dto: any): Promise<any>;
     orderRejected(dto: any): Promise<any>;
     orderPaid(dto: any): Promise<any>;
+    orderDelivered(dto: any): Promise<any>;
     registerWebhook(): Promise<any>;
 }

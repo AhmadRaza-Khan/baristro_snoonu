@@ -15,6 +15,7 @@ export declare class OrderService {
     rejectOrderWebhook(payload: any): Promise<any>;
     acceptOrderWebhook(payload: any): Promise<any>;
     readyForPickupWebhook(payload: any): Promise<any>;
+    deliveryOrderWebhook(payload: any): Promise<any>;
     webhookHandler(payload: any, webhookType: string, endpoint: string, status: number): Promise<any>;
     registerWebhook(): Promise<any>;
 }

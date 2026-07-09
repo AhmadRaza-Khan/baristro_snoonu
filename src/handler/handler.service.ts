@@ -39,6 +39,8 @@ export class HandlerService {
             ? await response.json()
             : await response.text();
 
+            console.log(`API Response from ${url}:`, data);
+
             if (!response.ok) {
             throw new Error(
                 `Snoonu API Error ${response.status}: ${JSON.stringify(data)}`,
@@ -47,6 +49,7 @@ export class HandlerService {
 
             return data;
         } catch (error: any) {
+            console.log(`Error in apiHandler for endpoint ${endpoint}:`, error);
             throw new Error(`apiHandler failed: ${error.message}`);
         }
 }

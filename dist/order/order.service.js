@@ -112,7 +112,7 @@ let OrderService = class OrderService {
             const order = await this.prisma.order.findUnique({ where: { snoonu_id: String(payload.orderId) } });
             if (!order)
                 return { success: false, message: `Order ${payload.orderId} not found in database` };
-            const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', { partner_ref: `Snoonu-${payload.order_id}`, "reason": payload.cancellationReason });
+            const response = await this.webhookHandler(payload, "cancelled", `/api/v1/orders/cancel`, 7);
             if (response && response.status === "success") {
                 console.log('Order successfully cancelled in Odoo with response:', response);
                 await this.prisma.order.update({
@@ -131,7 +131,7 @@ let OrderService = class OrderService {
     }
     async rejectOrderWebhook(payload) {
         try {
-            const webhook = await this.webhookHandler(payload, "rejected", `/api/v1/orders/reject`, 7);
+            const webhook = await this.webhookHandler(payload, "rejected", `/api/v1/orders/cancel`, 7);
             console.log(`Order ${payload.order_name} with ID ${payload.order_id} has been rejected.`);
             return { success: true, message: "Webhook received for order rejection" };
         }
@@ -164,6 +164,17 @@ let OrderService = class OrderService {
             return { success: false, message: "Failed to process ready for pickup webhook" };
         }
     }
+    async deliveryOrderWebhook(payload) {
+        try {
+            const webhook = await this.webhookHandler(payload, "delivered", `/api/v1/orders/delivered`, 7);
+            console.log(`Order ${payload.order_name} with ID ${payload.order_id} has been delivered.`);
+            return { success: true, message: "Webhook received for order delivery" };
+        }
+        catch (error) {
+            console.error("Error delivering order:", error.message);
+            return { success: false, message: "Failed to deliver order" };
+        }
+    }
     async webhookHandler(payload, webhookType, endpoint, status) {
         try {
             const { order_id, order_name } = payload;
@@ -190,7 +201,7 @@ let OrderService = class OrderService {
         const BASE_URL = "https://baristrosnoonu.cyberboost.io";
         try {
             const payload = {
-                "id": "019dd371-0ab8-7b36-a768-c4fc7039737b",
+                "id": "019df1fa-abac-79b5-9937-aa61ad29e29e",
                 "webhooks": {
                     "menuSyncStatusWebhook": "https://baristrosnoonu.cyberboost.io/menu/sync-status",
                     "orderCreateWebhook": "https://baristrosnoonu.cyberboost.io/order/place",
