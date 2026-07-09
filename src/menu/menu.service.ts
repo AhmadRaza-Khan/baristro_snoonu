@@ -5,28 +5,27 @@ import { HandlerService } from '../handler/handler.service';
 
 @Injectable()
 export class MenuService {
-    private readonly snoonuApiUrl: string;
+    private readonly channelId: string;
     constructor(
         private handler: HandlerService, private prisma: PrismaService, private config: ConfigService
     ) {
-        this.snoonuApiUrl = this.config.get<string>('SNOONU_API_URL')!;
+        this.channelId = this.config.get<string>('CHANNELL_ID')!;
     }
 
     async saveCategoriesToDB(): Promise<any> {
+        const response = await this.handler.odooApiHandler("/api/pos/categs", "GET");
         try {
-            const response = await this.prisma.category.findMany({});
-            return response;
-            // const categories: { category_id: number; category_name: string; products: any[] }[] = response?.data ?? [];
+            const categories: { category_id: number; category_name: any; products: any[] }[] = response?.data ?? [];
 
-            // for (const cat of categories) {
-            //     await this.prisma.category.upsert({
-            //         where: { categoryId: cat.category_id },
-            //         create: { categoryId: cat.category_id, categoryName: cat.category_name, products: cat.products },
-            //         update: { categoryName: cat.category_name, products: cat.products },
-            //     });
-            // }
+            for (const cat of categories) {
+                await this.prisma.category.upsert({
+                    where: { categoryId: cat.category_id },
+                    update: { nameEn: cat.category_name.en, nameAr: cat.category_name.ar, products: cat.products },
+                    create: { categoryId: cat.category_id, categoryName: cat.category_name.en, nameEn: cat.category_name.en, nameAr: cat.category_name.ar, products: cat.products },
+                });
+            }
 
-            // return { success: true, saved: categories.length };
+            return { success: true, saved: categories.length };
         } catch (error: any) {
             console.log(`Error occurred during saving categories to database: \n ${error.message}`);
             return { success: false, message: `Error occurred during saving categories to database: \n ${error.message}` }
@@ -35,31 +34,34 @@ export class MenuService {
 
     async saveProductsToDB(): Promise<any> {
         try {
-            const response = await this.prisma.product.findFirst({ where: { productId:  618}});
-            return response;
-            // await Promise.all((response?.products ?? []).map(async (product: any) => {
-            //     const attributes = product.attributes || [];
+            const response = await this.handler.odooApiHandler("/api/pos/products", "GET");
 
-            //     await this.prisma.product.updateMany({
-            //         where: { productId: product.id },
-            //         data: { attributes, productNameEn: product.product_name_en, productNameAr: product.product_name_ar, imageUrl: product.image_url, variants: product.variants},
-            //     });
-            // }));
+            await Promise.all((response?.products ?? []).map(async (product: any) => {
+                const attributes = product.attributes || [];
 
-            // return { success: true };
+                await this.prisma.product.updateMany({
+                    where: { productId: product.id },
+                    data: { attributes, productNameEn: product.name.en, productNameAr: product.name.ar, imageUrl: product.image_url, variants: product.variants},
+                });
+            }));
+
+            return { success: true };
         } catch (error: any) {
             console.log(`Error occurred during saving products to database: \n ${error.message}`);
             return { success: false, message: `Error occurred during saving products to database: \n ${error.message}` }
         }
     }
 
+
     async saveMenu(): Promise<any> {
+        // await this.prisma.product.updateMany({where: {isSynced: true}, data: { isSynced: false}})
+        // return "hello"
         try {
-            const channelId = this.config.get<string>('CHANNELL_ID')!;
             const posId = this.config.get<string>('POS_ID')!;
             const menuName = this.config.get<string>('MENU_NAME') ?? 'Menu';
             const menuNameAr = this.config.get<string>('MENU_NAME_AR') ?? 'قائمة';
             const menuImageUrl = this.config.get<string>('MENU_IMAGE_URL') ?? '';
+            const config: any = [];
 
             const [allProducts, categories] = await Promise.all([
                 this.prisma.product.findMany({ where: { isSynced: false } }),
@@ -152,7 +154,7 @@ export class MenuService {
                                 ],
                                 price: Number(val.price_extra ?? 0),
                                 snoozed: false,
-                                channelConfigurations: [{ channelId, snoozed: false }],
+                                channelConfigurations: [{ channelId: this.channelId, snoozed: false }],
                             });
                         }
                     }
@@ -172,7 +174,7 @@ export class MenuService {
                             min: 0,
                             modifierIds,
                             snoozed: false,
-                            channelConfigurations: [{ channelId, snoozed: false }],
+                            channelConfigurations: [{ channelId: this.channelId, snoozed: false }],
                         });
                     }
                 }
@@ -215,7 +217,7 @@ export class MenuService {
                     snoozed: product.isSnoozed,
                     channelConfigurations: [
                         {
-                            channelId,
+                            channelId: this.channelId,
                             snoozed: product.isSnoozed,
                             snoozedUntil: null,
                             price: null,
@@ -234,8 +236,8 @@ export class MenuService {
                     return {
                         categoryId: String(cat.categoryId),
                         name: [
-                            { language: 0, value: cat.categoryName },
-                            { language: 1, value: cat.categoryName },
+                            { language: 0, value: cat.nameEn },
+                            { language: 1, value: cat.nameAr },
                         ],
                         description: [
                             { language: 0, value: '' },
@@ -245,7 +247,7 @@ export class MenuService {
                         products: catProducts,
                         snoozed: cat.isSnoozed,
                         sortOrder: i + 1,
-                        channelConfigurations: [{ channelId, snoozed: cat.isSnoozed }],
+                        channelConfigurations: [{ channelId: this.channelId, snoozed: false }],
                     };
                 })
                 .filter(cat => cat.products.length > 0);
@@ -267,6 +269,8 @@ export class MenuService {
                 modifierGroups: finalModGroups,
                 modifiers: Array.from(modifierMap.values()),
             };
+
+
 
             const result = await this.handler.apiHandler(`/api/v1/menu/save`, 'POST', menu);
             await this.prisma.product.updateMany({
@@ -310,5 +314,14 @@ export class MenuService {
             console.error('Error saving menu:', error);
             throw error;
         }
+    }
+
+    async test(){
+        const requestId1 = "019f46b6-ac44-733f-b8f8-09b48f90b8fe";
+        const POS_ID = "019dd371-0ab8-7b36-a768-c4fc7039737b"
+        const channelId = "019dd37a-3afb-7823-b033-8d542494ec1a";
+        const response =  await this.handler.apiHandler(`/api/v1/menu/${requestId1}/status`, "GET");
+        console.log(response);
+        return {response}
     }
 }

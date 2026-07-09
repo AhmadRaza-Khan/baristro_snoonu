@@ -3,6 +3,12 @@ export declare class OrderController {
     private service;
     constructor(service: OrderService);
     placeOrder(payload: any): Promise<any>;
+    updateOrder(payload: any): Promise<{
+        success: boolean;
+    }>;
+    updateOrderStatus(payload: any): Promise<{
+        success: boolean;
+    }>;
     cancelOrder(payload: any): Promise<any>;
     orderLoaded(dto: any): Promise<any>;
     orderRejected(dto: any): Promise<any>;

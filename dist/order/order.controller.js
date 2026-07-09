@@ -23,6 +23,14 @@ let OrderController = class OrderController {
     async placeOrder(payload) {
         return await this.service.placeOrderWebhook(payload);
     }
+    async updateOrder(payload) {
+        console.log("Received order update with payload: ", payload);
+        return { success: true };
+    }
+    async updateOrderStatus(payload) {
+        console.log("Received order status update with payload: ", payload);
+        return { success: true };
+    }
     async cancelOrder(payload) {
         return await this.service.cancelOrderWebhook(payload);
     }
@@ -47,6 +55,20 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], OrderController.prototype, "placeOrder", null);
+__decorate([
+    (0, common_1.Post)("/update"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "updateOrder", null);
+__decorate([
+    (0, common_1.Post)("/status"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "updateOrderStatus", null);
 __decorate([
     (0, common_1.Post)("/cancel"),
     __param(0, (0, common_1.Body)()),

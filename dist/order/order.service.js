@@ -27,9 +27,26 @@ let OrderService = class OrderService {
         this.channelId = this.config.get("CHANNELL_ID");
         this.posId = this.config.get("POS_ID");
     }
+    async test() {
+        const response = await this.handler.odooApiHandler('/api/pos/configs', 'GET');
+        return response;
+    }
     delay(ms) { new Promise(resolve => setTimeout(resolve, ms)); }
     ;
     async placeOrderWebhook(payload) {
+        console.log("recied payload from order \n", payload);
+        function mapOrderType(id) {
+            switch (id) {
+                case 1:
+                    return 6;
+                case 2:
+                    return 2;
+                case 3:
+                    return 7;
+                default:
+                    throw new Error(`Unknown Snoonu ID: ${id}`);
+            }
+        }
         try {
             const products = payload.products.map((product) => {
                 const modifiers = (product.modifierGroups ?? []).flatMap((group) => group.modifiers ?? []);
@@ -45,25 +62,30 @@ let OrderService = class OrderService {
                     attribute_value_ids: modifiers.map((modifier) => Number(modifier.id)),
                 };
             });
+            const name = payload?.customer?.name ? payload?.customer?.name : "Snoonu Customer";
+            const phone = payload?.customer?.phoneNumber ? payload?.customer?.phoneNumber : null;
+            const email = payload?.customer?.email ? payload?.customer?.email : null;
+            const street = payload?.deliveryAddress?.description ? payload?.deliveryAddress?.description : null;
+            const city = payload?.deliveryAddress?.state ? payload?.deliveryAddress?.state : null;
             const data = {
-                "snoonu_ref": payload.orderId,
-                "customer_name": payload.customer.name,
-                "phone": payload.customer.phoneNumber,
-                "email": payload.customer.email,
-                "street": payload.deliveryAddress.description,
-                "city": payload.deliveryAddress.state,
+                "partner_ref": "Snoonu-" + payload.orderId,
+                "order_type": mapOrderType(payload.orderType),
+                "customer_name": name,
+                "phone": phone,
+                "email": email,
+                "street": street,
+                "city": city,
+                "delivery_fee": payload.deliveryFee / 100,
                 "amount_tax": 0,
-                "amount_total": payload.payment.amount,
-                "amount_paid": payload.payment.totalPaid,
+                "amount_total": payload.payment.amount / 100,
+                "amount_paid": payload.payment.totalPaid / 100,
                 "amount_return": 0,
                 "pos_reference": `SNOONU-${payload.orderId}`,
-                "pickup_time": payload.pickupTime,
+                "pickup_time": payload.pickupTime || null,
                 "lines": products
             };
             const response = await this.handler.odooApiHandler('/api/pos/create-order', 'POST', data);
             if (response && response.status == "success") {
-                await this.webhookHandler({ order_id: response.order_id, order_name: response.order_name }, "validated", `/api/v1/orders/validate`, 1);
-                console.log('Order successfully created in Odoo with response:', response);
                 await this.prisma.order.create({
                     data: {
                         snoonu_id: String(payload.orderId),
@@ -71,7 +93,6 @@ let OrderService = class OrderService {
                         status: "validated"
                     }
                 });
-                console.log(`Order with Snoonu ID ${payload.orderId} and Odoo ID ${response.order_id} has been created in the database.`);
                 return { success: true, message: "Order validdated successfully!" };
             }
             else {
@@ -88,20 +109,17 @@ let OrderService = class OrderService {
         try {
             if (!payload.orderId)
                 return { success: false, message: "Order ID is required for cancellation" };
-            if (payload.channelId !== this.channelId) {
-                return { success: false, message: "Invalid channel ID" };
-            }
             const order = await this.prisma.order.findUnique({ where: { snoonu_id: String(payload.orderId) } });
             if (!order)
                 return { success: false, message: `Order ${payload.orderId} not found in database` };
-            const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', { snoonu_ref: payload.orderId, "reason": payload.cancellationReason });
+            const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', { partner_ref: `Snoonu-${payload.order_id}`, "reason": payload.cancellationReason });
             if (response && response.status === "success") {
                 console.log('Order successfully cancelled in Odoo with response:', response);
                 await this.prisma.order.update({
                     where: { snoonu_id: String(payload.orderId) },
                     data: { status: "cancelled" },
                 });
-                console.log(`Order with Snoonu ID ${payload.orderId} has been cancelled in the database.`);
+                console.log(`Order with Partner ID ${payload.orderId} has been cancelled in the database.`);
                 return { success: true, message: "Order cancelled successfully" };
             }
             return { success: false, message: "Failed to cancel order in Odoo" };
@@ -151,8 +169,8 @@ let OrderService = class OrderService {
             const { order_id, order_name } = payload;
             const order = await this.prisma.order.findUnique({ where: { odoo_id: String(order_id) } });
             const requestData = {
+                "integrationOrderId": "Snoonu-" + payload.order_id,
                 "orderId": order?.snoonu_id,
-                "status": status,
                 "channelId": this.channelId,
             };
             await this.handler.apiHandler(endpoint, 'POST', requestData);
@@ -172,14 +190,18 @@ let OrderService = class OrderService {
         const BASE_URL = "https://baristrosnoonu.cyberboost.io";
         try {
             const payload = {
-                "id": this.posId,
+                "id": "019dd371-0ab8-7b36-a768-c4fc7039737b",
                 "webhooks": {
-                    "orderCreateWebhook": `${BASE_URL}/order/place`,
-                    "orderCancelWebhook": `${BASE_URL}/order/cancel`,
+                    "menuSyncStatusWebhook": "https://baristrosnoonu.cyberboost.io/menu/sync-status",
+                    "orderCreateWebhook": "https://baristrosnoonu.cyberboost.io/order/place",
+                    "orderCancelWebhook": "https://baristrosnoonu.cyberboost.io/order/cancel",
+                    "orderUpdateWebhook": "https://baristrosnoonu.cyberboost.io/order/update",
+                    "orderStatusUpdateWebhook": "https://baristrosnoonu.cyberboost.io/order/status",
+                    "loginWebhook": null
                 }
             };
             const response = await this.handler.apiHandler('/api/v1/pos/register-webhooks', 'POST', payload);
-            console.log('Webhook registration response:', response);
+            console.log('Webhook registration response is :', response);
             return { success: true, message: response };
         }
         catch (error) {

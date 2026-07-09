@@ -24,6 +24,8 @@ model Category {
   id           Int      @id @default(autoincrement())
   categoryId   Int      @unique
   categoryName String
+  nameAr       String?
+  nameEn       String?
   products     Json     @default("[]")
   isSynced     Boolean  @default(false)
   isSnoozed    Boolean  @default(false)
