@@ -42,6 +42,11 @@ export class OrderController {
     return await this.service.readyForPickupWebhook(dto);
   }
 
+  @Post("delivered")
+  async orderDelivered(@Body() dto: any){
+    return await this.service.deliveryOrderWebhook(dto);
+  }
+
   @Get("register-webhook")
   async registerWebhook(){
     return await this.service.registerWebhook();

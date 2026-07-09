@@ -128,7 +128,7 @@ export class OrderService {
 
   async rejectOrderWebhook(payload: any): Promise<any> {
     try {
-      const webhook = await this.webhookHandler(payload, "rejected", `/api/v1/orders/reject`, 7);
+      const webhook = await this.webhookHandler(payload, "rejected", `/api/v1/orders/cancel`, 7);
       console.log(`Order ${payload.order_name} with ID ${payload.order_id} has been rejected.`);
       return { success: true, message: "Webhook received for order rejection" };
     } catch (error: any) {
@@ -160,6 +160,17 @@ export class OrderService {
     } catch (error: any) {
       console.error("Error processing ready for pickup webhook:", error.message);
       return { success: false, message: "Failed to process ready for pickup webhook" };
+    }
+  }
+
+  async deliveryOrderWebhook(payload: any): Promise<any> {
+    try {
+      const webhook = await this.webhookHandler(payload, "delivered", `/api/v1/orders/delivered`, 7);
+      console.log(`Order ${payload.order_name} with ID ${payload.order_id} has been delivered.`);
+      return { success: true, message: "Webhook received for order delivery" };
+    } catch (error: any) {
+      console.error("Error delivering order:", error.message);
+      return { success: false, message: "Failed to deliver order" };
     }
   }
 
