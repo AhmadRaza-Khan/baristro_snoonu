@@ -109,7 +109,7 @@ export class OrderService {
       const order = await this.prisma.order.findUnique({ where: { snoonu_id: String(payload.orderId) } });
       if (!order) return { success: false, message: `Order ${payload.orderId} not found in database` };
 
-      const response = await this.webhookHandler(payload, "cancelled", `/api/v1/orders/cancel`, 7);
+      const response = await this.handler.odooApiHandler('/api/pos/order/cancel', 'POST', { partner_ref: `Snoonu-${payload.order_id}`, "reason": payload.cancellationReason });
       if (response && response.status === "success") {
         console.log('Order successfully cancelled in Odoo with response:', response);
         await this.prisma.order.update({
@@ -128,7 +128,7 @@ export class OrderService {
 
   async rejectOrderWebhook(payload: any): Promise<any> {
     try {
-      const webhook = await this.webhookHandler(payload, "rejected", `/api/v1/orders/cancel`, 7);
+      const webhook = await this.webhookHandler(payload, "cancelled", `/api/v1/orders/cancel`, 7);
       console.log(`Order ${payload.order_name} with ID ${payload.order_id} has been rejected.`);
       return { success: true, message: "Webhook received for order rejection" };
     } catch (error: any) {
