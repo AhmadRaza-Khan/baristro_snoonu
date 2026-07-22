@@ -47,9 +47,22 @@ model Product {
   productNameEn String
 }
 
+model Store {
+  id        Int      @id @default(autoincrement())
+  channelId String   @unique
+  isSnoozed Boolean  @default(false)
+  isBusy    Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
 model Order {
   id        Int     @id @default(autoincrement())
   snoonu_id String  @unique
   odoo_id   String  @unique
   status    String?
+}
+
+model Raw {
+  id           Int      @id @default(autoincrement())
+  payload     Json
 }

@@ -35,6 +35,9 @@ let OrderService = class OrderService {
     ;
     async placeOrderWebhook(payload) {
         console.log("recied payload from order \n", payload);
+        await this.prisma.Raw.create({ data: {
+                payload: payload
+            } });
         function mapOrderType(id) {
             switch (id) {
                 case 1:
@@ -201,7 +204,7 @@ let OrderService = class OrderService {
         const BASE_URL = "https://baristrosnoonu.cyberboost.io";
         try {
             const payload = {
-                "id": "019df1fa-abac-79b5-9937-aa61ad29e29e",
+                "id": "019f83e6-3a91-71d5-b0be-07f389186dd8",
                 "webhooks": {
                     "menuSyncStatusWebhook": "https://baristrosnoonu.cyberboost.io/menu/sync-status",
                     "orderCreateWebhook": "https://baristrosnoonu.cyberboost.io/order/place",

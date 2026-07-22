@@ -6,6 +6,26 @@ import { MenuService } from './menu.service';
 export class MenuController {
     constructor(private readonly service: MenuService){}
 
+    @Get("update-addons")
+    async updateAddons() {
+        return this.service.updateAddons();
+    }
+
+    @Post("update-addons/:valueId")
+    async updateAddonName(@Param('valueId') valueId: string, @Body() body: { nameAr: string }) {
+        return this.service.updateAddonName(+valueId, body.nameAr);
+    }
+
+    @Post("update-addon-group/:attributeId")
+    async updateAddonGroupName(@Param('attributeId') attributeId: string, @Body() body: { nameAr: string }) {
+        return this.service.updateAddonGroupName(+attributeId, body.nameAr);
+    }
+
+    @Get("/addons/page")
+    addonsPage(@Res() res: any) {
+        return res.sendFile(join(process.cwd(), 'public', 'addons.html'));
+    }
+
     @Get("test")
     async test(){
         await this.service.test();

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Addons</title>
+  <style>
+    .fade-in { animation: fadeIn 0.3s ease both; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .section-table { display: block; }
+    .section-table.force-hidden { display: none !important; }
+  </style>
+</head>
+<body class="min-h-screen bg-base-200">
+
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-10">
+
+    <!-- Groups -->
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h2 class="text-lg font-bold">Modifier Groups</h2>
+          <p class="text-xs opacity-50">Attribute groups found across unsynced products.</p>
+        </div>
+        <span id="group-count" class="badge badge-outline text-xs hidden"></span>
+      </div>
+
+      <div id="groups-loading" class="flex flex-col gap-2">
+        <div class="skeleton h-10 w-full rounded-xl"></div>
+        <div class="skeleton h-10 w-full rounded-xl opacity-70"></div>
+      </div>
+
+      <div id="groups-empty" class="hidden text-center py-10 opacity-40">
+        <p class="text-sm">No groups found.</p>
+      </div>
+
+      <div id="groups-table-wrapper" class="section-table force-hidden overflow-x-auto rounded-xl border border-base-300 bg-base-100 shadow-sm">
+        <table class="table table-sm w-full">
+          <thead>
+            <tr class="text-xs uppercase tracking-wider opacity-50 border-b border-base-300">
+              <th class="py-3 px-4">Group (EN)</th>
+              <th class="py-3 px-4">Group (AR)</th>
+              <th class="py-3 px-4 w-28 text-center">Status</th>
+              <th class="py-3 px-4 w-24 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="groups-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Addons -->
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h2 class="text-lg font-bold">Addons</h2>
+          <p class="text-xs opacity-50">Modifier values found across unsynced products. Fill in the Arabic name to translate.</p>
+        </div>
+        <span id="addon-count" class="badge badge-outline text-xs hidden"></span>
+      </div>
+
+      <div id="addons-loading" class="flex flex-col gap-2">
+        <div class="skeleton h-10 w-full rounded-xl"></div>
+        <div class="skeleton h-10 w-full rounded-xl opacity-70"></div>
+        <div class="skeleton h-10 w-full rounded-xl opacity-40"></div>
+      </div>
+
+      <div id="addons-error" class="hidden text-center py-10 opacity-50">
+        <p class="text-sm">Failed to load addons.</p>
+        <button class="btn btn-xs btn-outline mt-3" onclick="loadAddons()">Retry</button>
+      </div>
+
+      <div id="addons-empty" class="hidden text-center py-10 opacity-40">
+        <p class="text-sm">No addons found.</p>
+      </div>
+
+      <div id="addons-table-wrapper" class="section-table force-hidden overflow-x-auto rounded-xl border border-base-300 bg-base-100 shadow-sm">
+        <table class="table table-sm w-full">
+          <thead>
+            <tr class="text-xs uppercase tracking-wider opacity-50 border-b border-base-300">
+              <th class="py-3 px-4">Group</th>
+              <th class="py-3 px-4">Addon (EN)</th>
+              <th class="py-3 px-4">Addon (AR)</th>
+              <th class="py-3 px-4 w-28 text-center">Status</th>
+              <th class="py-3 px-4 w-24 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="addons-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Edit Modal -->
+  <dialog id="edit-modal" class="modal">
+    <div class="modal-box max-w-sm">
+      <h3 id="edit-title" class="font-bold text-base mb-4">Edit Addon</h3>
+      <div class="flex flex-col gap-3">
+        <div id="edit-group-wrapper">
+          <label class="text-xs opacity-50">Group</label>
+          <p id="edit-group" class="text-sm font-medium"></p>
+        </div>
+        <div>
+          <label class="text-xs opacity-50">English Name</label>
+          <input id="edit-name-en" type="text" class="input input-sm input-bordered w-full" readonly>
+        </div>
+        <div>
+          <label class="text-xs opacity-50">Arabic Name</label>
+          <input id="edit-name-ar" type="text" class="input input-sm input-bordered w-full" dir="rtl">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-5">
+        <button class="btn btn-sm btn-ghost" onclick="document.getElementById('edit-modal').close()">Cancel</button>
+        <button id="edit-save" class="btn btn-sm btn-primary">Update</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <script src="/js/cdn.js"></script>
+  <script>
+    function escHtml(str) {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    let addonsById = new Map();
+    let groupsById = new Map();
+
+    function extractData(products) {
+      const addons = new Map();
+      const groups = new Map();
+      for (const product of products) {
+        const attributes = Array.isArray(product.attributes) ? product.attributes : [];
+        for (const group of attributes) {
+          const groupNameEn = group.attribute_name?.en || '';
+          if (!groups.has(group.attribute_id)) {
+            groups.set(group.attribute_id, {
+              id: group.attribute_id,
+              nameEn: groupNameEn,
+              nameAr: group.attribute_name?.ar || '',
+            });
+          }
+          for (const value of group.values ?? []) {
+            if (addons.has(value.id)) continue;
+            addons.set(value.id, {
+              id: value.id,
+              groupNameEn,
+              nameEn: value.name?.en || '',
+              nameAr: value.name?.ar || '',
+            });
+          }
+        }
+      }
+      return { addons, groups };
+    }
+
+    function isTranslated(item) {
+      return !!item.nameAr && item.nameAr.trim() !== item.nameEn.trim();
+    }
+
+    function renderAddonRow(addon) {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-base-200 fade-in';
+      tr.id = `addon-row-${addon.id}`;
+      const translated = isTranslated(addon);
+      tr.innerHTML = `
+        <td class="py-3 px-4 text-sm opacity-70">${escHtml(addon.groupNameEn)}</td>
+        <td class="py-3 px-4 font-medium text-sm">${escHtml(addon.nameEn)}</td>
+        <td class="py-3 px-4 text-sm opacity-70" dir="rtl" id="addon-ar-${addon.id}">${escHtml(addon.nameAr || '—')}</td>
+        <td class="py-3 px-4 text-center" id="addon-status-${addon.id}">
+          <span class="badge badge-xs ${translated ? 'badge-success' : 'badge-warning'}">${translated ? 'Translated' : 'Needs translation'}</span>
+        </td>
+        <td class="py-3 px-4 text-center">
+          <button class="btn btn-xs btn-outline" onclick="openEdit('value', ${addon.id})">Edit</button>
+        </td>
+      `;
+      return tr;
+    }
+
+    function renderGroupRow(group) {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-base-200 fade-in';
+      tr.id = `group-row-${group.id}`;
+      const translated = isTranslated(group);
+      tr.innerHTML = `
+        <td class="py-3 px-4 font-medium text-sm">${escHtml(group.nameEn)}</td>
+        <td class="py-3 px-4 text-sm opacity-70" dir="rtl" id="group-ar-${group.id}">${escHtml(group.nameAr || '—')}</td>
+        <td class="py-3 px-4 text-center" id="group-status-${group.id}">
+          <span class="badge badge-xs ${translated ? 'badge-success' : 'badge-warning'}">${translated ? 'Translated' : 'Needs translation'}</span>
+        </td>
+        <td class="py-3 px-4 text-center">
+          <button class="btn btn-xs btn-outline" onclick="openEdit('group', ${group.id})">Edit</button>
+        </td>
+      `;
+      return tr;
+    }
+
+    async function loadAddons() {
+      const groupsLoading = document.getElementById('groups-loading');
+      const groupsEmpty   = document.getElementById('groups-empty');
+      const groupsWrapper = document.getElementById('groups-table-wrapper');
+      const groupCount    = document.getElementById('group-count');
+
+      const loading = document.getElementById('addons-loading');
+      const error   = document.getElementById('addons-error');
+      const empty   = document.getElementById('addons-empty');
+      const wrapper = document.getElementById('addons-table-wrapper');
+      const count   = document.getElementById('addon-count');
+
+      groupsLoading.classList.remove('hidden');
+      groupsEmpty.classList.add('hidden');
+      groupsWrapper.classList.add('force-hidden');
+      groupCount.classList.add('hidden');
+
+      loading.classList.remove('hidden');
+      error.classList.add('hidden');
+      empty.classList.add('hidden');
+      wrapper.classList.add('force-hidden');
+      count.classList.add('hidden');
+
+      try {
+        const res = await fetch('/menu/update-addons', { credentials: 'include' });
+        const products = await res.json();
+
+        const { addons, groups } = extractData(Array.isArray(products) ? products : []);
+        addonsById = addons;
+        groupsById = groups;
+
+        groupsLoading.classList.add('hidden');
+        loading.classList.add('hidden');
+
+        if (!groupsById.size) {
+          groupsEmpty.classList.remove('hidden');
+        } else {
+          groupCount.textContent = `${groupsById.size} total`;
+          groupCount.classList.remove('hidden');
+
+          const groupsTbody = document.getElementById('groups-tbody');
+          groupsTbody.innerHTML = '';
+          [...groupsById.values()]
+            .sort((a, b) => a.nameEn.localeCompare(b.nameEn))
+            .forEach(group => groupsTbody.appendChild(renderGroupRow(group)));
+
+          groupsWrapper.classList.remove('force-hidden');
+        }
+
+        if (!addonsById.size) { empty.classList.remove('hidden'); return; }
+
+        count.textContent = `${addonsById.size} total`;
+        count.classList.remove('hidden');
+
+        const tbody = document.getElementById('addons-tbody');
+        tbody.innerHTML = '';
+        [...addonsById.values()]
+          .sort((a, b) => a.groupNameEn.localeCompare(b.groupNameEn) || a.nameEn.localeCompare(b.nameEn))
+          .forEach(addon => tbody.appendChild(renderAddonRow(addon)));
+
+        wrapper.classList.remove('force-hidden');
+      } catch (e) {
+        groupsLoading.classList.add('hidden');
+        loading.classList.add('hidden');
+        error.classList.remove('hidden');
+      }
+    }
+
+    let editingType = null;
+    let editingId = null;
+
+    function openEdit(type, id) {
+      const item = type === 'group' ? groupsById.get(id) : addonsById.get(id);
+      if (!item) return;
+      editingType = type;
+      editingId = id;
+
+      const groupWrapper = document.getElementById('edit-group-wrapper');
+      if (type === 'group') {
+        document.getElementById('edit-title').textContent = 'Edit Group';
+        groupWrapper.classList.add('hidden');
+      } else {
+        document.getElementById('edit-title').textContent = 'Edit Addon';
+        document.getElementById('edit-group').textContent = item.groupNameEn;
+        groupWrapper.classList.remove('hidden');
+      }
+
+      document.getElementById('edit-name-en').value = item.nameEn;
+      document.getElementById('edit-name-ar').value = isTranslated(item) ? item.nameAr : '';
+      document.getElementById('edit-modal').showModal();
+    }
+
+    document.getElementById('edit-save').addEventListener('click', async () => {
+      if (editingId == null || editingType == null) return;
+      const nameAr = document.getElementById('edit-name-ar').value.trim();
+      if (!nameAr) { showToast('Arabic name is required.', 'error'); return; }
+
+      const btn = document.getElementById('edit-save');
+      btn.disabled = true;
+      try {
+        const endpoint = editingType === 'group'
+          ? `/menu/update-addon-group/${editingId}`
+          : `/menu/update-addons/${editingId}`;
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nameAr }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Update failed');
+
+        if (editingType === 'group') {
+          const group = groupsById.get(editingId);
+          group.nameAr = nameAr;
+          const arCell = document.getElementById(`group-ar-${editingId}`);
+          if (arCell) arCell.textContent = nameAr;
+          const statusCell = document.getElementById(`group-status-${editingId}`);
+          if (statusCell) statusCell.innerHTML = `<span class="badge badge-xs badge-success">Translated</span>`;
+          showToast('Group updated.', 'success');
+        } else {
+          const addon = addonsById.get(editingId);
+          addon.nameAr = nameAr;
+          const arCell = document.getElementById(`addon-ar-${editingId}`);
+          if (arCell) arCell.textContent = nameAr;
+          const statusCell = document.getElementById(`addon-status-${editingId}`);
+          if (statusCell) statusCell.innerHTML = `<span class="badge badge-xs badge-success">Translated</span>`;
+          showToast('Addon updated.', 'success');
+        }
+
+        document.getElementById('edit-modal').close();
+      } catch (e) {
+        showToast('Failed to update.', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    loadAddons();
+  </script>
+</body>
+</html>

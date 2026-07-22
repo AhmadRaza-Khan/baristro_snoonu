@@ -12,6 +12,77 @@ export class MenuService {
         this.channelId = this.config.get<string>('CHANNELL_ID')!;
     }
 
+    async updateAddons(): Promise<any> {
+        const response = await this.prisma.product.findMany({ where: { isSynced: false } });
+        return response;
+    }
+
+    async updateAddonName(valueId: number, nameAr: string): Promise<any> {
+        try {
+            const products = await this.prisma.product.findMany({ where: { isSynced: false } });
+            let updated = 0;
+
+            for (const product of products) {
+                const attributes = (product.attributes as any[]) ?? [];
+                let changed = false;
+
+                for (const group of attributes) {
+                    for (const value of group.values ?? []) {
+                        if (value.id === valueId) {
+                            value.name.ar = nameAr;
+                            changed = true;
+                        }
+                    }
+                }
+
+                if (changed) {
+                    await this.prisma.product.update({
+                        where: { id: product.id },
+                        data: { attributes },
+                    });
+                    updated++;
+                }
+            }
+
+            return { success: true, updated };
+        } catch (error: any) {
+            console.log(`Error occurred during updating addon name: \n ${error.message}`);
+            return { success: false, message: `Error occurred during updating addon name: \n ${error.message}` };
+        }
+    }
+
+    async updateAddonGroupName(attributeId: number, nameAr: string): Promise<any> {
+        try {
+            const products = await this.prisma.product.findMany({ where: { isSynced: false } });
+            let updated = 0;
+
+            for (const product of products) {
+                const attributes = (product.attributes as any[]) ?? [];
+                let changed = false;
+
+                for (const group of attributes) {
+                    if (group.attribute_id === attributeId) {
+                        group.attribute_name.ar = nameAr;
+                        changed = true;
+                    }
+                }
+
+                if (changed) {
+                    await this.prisma.product.update({
+                        where: { id: product.id },
+                        data: { attributes },
+                    });
+                    updated++;
+                }
+            }
+
+            return { success: true, updated };
+        } catch (error: any) {
+            console.log(`Error occurred during updating addon group name: \n ${error.message}`);
+            return { success: false, message: `Error occurred during updating addon group name: \n ${error.message}` };
+        }
+    }
+
     async saveCategoriesToDB(): Promise<any> {
         const response = await this.handler.odooApiHandler("/api/pos/categs", "GET");
         try {
@@ -271,7 +342,7 @@ export class MenuService {
             };
 
 
-
+            return menu;
             const result = await this.handler.apiHandler(`/api/v1/menu/save`, 'POST', menu);
             await this.prisma.product.updateMany({
                 where: { productId: { in: products.map(p => p.productId) } },
@@ -285,7 +356,7 @@ export class MenuService {
     }
 
     async listProducts(): Promise<any> {
-        return this.prisma.product.findMany({ orderBy: { productId: 'asc' } });
+        return this.prisma.product.findMany({ where: { isSynced: true }, orderBy: { productId: 'asc' } });
     }
 
     async deleteProduct(productId: number): Promise<any> {

@@ -21,4 +21,24 @@ export class SnoozeController {
     async toggleSnooze(@Param('id') id: string) {
         return this.service.toggleProductSnooze(+id);
     }
+
+    @Get('snooze/store')
+    async getStoreStatus() {
+        return this.service.getStoreStatus();
+    }
+
+    @Patch('snooze/store')
+    async toggleStoreSnooze() {
+        return this.service.toggleStoreSnooze();
+    }
+
+    @Get('snooze/store/busy')
+    async getBusyStatus() {
+        return this.service.getBusyStatus();
+    }
+
+    @Patch('snooze/store/busy')
+    async toggleBusyStatus() {
+        return this.service.toggleBusyStatus();
+    }
 }
