@@ -35,7 +35,7 @@ let OrderService = class OrderService {
     ;
     async placeOrderWebhook(payload) {
         console.log("recied payload from order \n", payload);
-        await this.prisma.Raw.create({ data: {
+        await this.prisma.raw.create({ data: {
                 payload: payload
             } });
         function mapOrderType(id) {

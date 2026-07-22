@@ -22,7 +22,7 @@ export class OrderService {
   async placeOrderWebhook(payload: any): Promise<any> {
     console.log("recied payload from order \n", payload);
 
-    await this.prisma.Raw.create({data: {
+    await this.prisma.raw.create({data: {
       payload: payload
     }})
 

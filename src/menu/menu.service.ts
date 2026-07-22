@@ -125,8 +125,8 @@ export class MenuService {
 
 
     async saveMenu(): Promise<any> {
-        // await this.prisma.product.updateMany({where: {isSynced: true}, data: { isSynced: false}})
-        // return "hello"
+        await this.prisma.product.updateMany({where: {isSynced: true}, data: { isSynced: false}})
+        return "hello"
         try {
             const posId = this.config.get<string>('POS_ID')!;
             const menuName = this.config.get<string>('MENU_NAME') ?? 'Menu';
