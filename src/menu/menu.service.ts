@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { HandlerService } from '../handler/handler.service';
+import { join } from 'path';
+import { mkdirSync } from 'fs';
+import sharp from 'sharp';
 
 @Injectable()
 export class MenuService {
@@ -10,6 +13,47 @@ export class MenuService {
         private handler: HandlerService, private prisma: PrismaService, private config: ConfigService
     ) {
         this.channelId = this.config.get<string>('CHANNELL_ID')!;
+    }
+
+    async downloadAndCovertImages(): Promise<any> {
+        const products = await this.prisma.product.findMany({ where: { isSynced: true }});
+        return products;
+        const outputDir = join(process.cwd(), 'public', 'products');
+        mkdirSync(outputDir, { recursive: true });
+
+        let downloaded = 0;
+        let failed = 0;
+
+        for (const product of products) {
+            if (!product.imageUrl) continue;
+
+            try {
+                const response = await fetch(product.imageUrl);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const buffer = Buffer.from(await response.arrayBuffer());
+                const fileName = product.productNameEn
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+
+                const image = sharp(buffer);
+                const metadata = await image.metadata();
+
+                if (metadata.format === 'png') {
+                    await image.png().toFile(join(outputDir, `${fileName}.png`));
+                } else {
+                    await image.jpeg().toFile(join(outputDir, `${fileName}.jpg`));
+                }
+                downloaded++;
+            } catch (error: any) {
+                failed++;
+                console.log(`Error occurred while downloading/converting image for product ${product.productId}: \n ${error.message}`);
+            }
+        }
+
+        return { success: true, total: products.length, downloaded, failed };
     }
 
     async updateAddons(): Promise<any> {
@@ -107,12 +151,20 @@ export class MenuService {
         try {
             const response = await this.handler.odooApiHandler("/api/pos/products", "GET");
 
+            // await Promise.all((response?.products ?? []).map(async (product: any) => {
+            //     const attributes = product.attributes || [];
+
+            //     await this.prisma.product.updateMany({
+            //         where: { productId: product.id },
+            //         data: { attributes, productNameEn: product.name.en, productNameAr: product.name.ar, imageUrl: product.image_url, variants: product.variants},
+            //     });
+            // }));
+
             await Promise.all((response?.products ?? []).map(async (product: any) => {
-                const attributes = product.attributes || [];
 
                 await this.prisma.product.updateMany({
                     where: { productId: product.id },
-                    data: { attributes, productNameEn: product.name.en, productNameAr: product.name.ar, imageUrl: product.image_url, variants: product.variants},
+                    data: {imageUrl: product.image, variants: product.variants },
                 });
             }));
 
@@ -125,8 +177,8 @@ export class MenuService {
 
 
     async saveMenu(): Promise<any> {
-        await this.prisma.product.updateMany({where: {isSynced: true}, data: { isSynced: false}})
-        return "hello"
+        // await this.prisma.product.updateMany({where: {isSynced: true}, data: { isSynced: false}})
+        // return "hello"
         try {
             const posId = this.config.get<string>('POS_ID')!;
             const menuName = this.config.get<string>('MENU_NAME') ?? 'Menu';
@@ -135,7 +187,7 @@ export class MenuService {
             const config: any = [];
 
             const [allProducts, categories] = await Promise.all([
-                this.prisma.product.findMany({ where: { isSynced: false } }),
+                this.prisma.product.findMany({ where: { isSynced: true } }),
                 this.prisma.category.findMany({}),
             ]);
 
@@ -343,12 +395,12 @@ export class MenuService {
 
 
             return menu;
-            const result = await this.handler.apiHandler(`/api/v1/menu/save`, 'POST', menu);
-            await this.prisma.product.updateMany({
-                where: { productId: { in: products.map(p => p.productId) } },
-                data: { isSynced: true },
-            });
-            return { success: true, result };
+            // const result = await this.handler.apiHandler(`/api/v1/menu/save`, 'POST', menu);
+            // await this.prisma.product.updateMany({
+            //     where: { productId: { in: products.map(p => p.productId) } },
+            //     data: { isSynced: true },
+            // });
+            // return { success: true, result };
         } catch (error: any) {
             console.error('Error saving menu:', error);
             return { success: false, message: error.message };
@@ -388,7 +440,7 @@ export class MenuService {
     }
 
     async test(){
-        const requestId1 = "019f46b6-ac44-733f-b8f8-09b48f90b8fe";
+        const requestId1 = "019f89ce-d958-75a5-a965-ac9e63855c8a";
         const POS_ID = "019dd371-0ab8-7b36-a768-c4fc7039737b"
         const channelId = "019dd37a-3afb-7823-b033-8d542494ec1a";
         const response =  await this.handler.apiHandler(`/api/v1/menu/${requestId1}/status`, "GET");

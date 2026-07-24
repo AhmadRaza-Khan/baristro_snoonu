@@ -44,6 +44,10 @@ const bodyParser = __importStar(require("body-parser"));
 const path_1 = require("path");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.enableCors({
+        origin: "http://localhost:8069",
+        credentials: true,
+    });
     app.use((0, cookie_parser_1.default)());
     app.use(bodyParser.json({ verify: (req, _res, buf) => {
             req.rawBody = buf;

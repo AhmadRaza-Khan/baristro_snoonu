@@ -8,7 +8,10 @@ export declare class OrderService {
     private readonly channelId;
     private readonly posId;
     constructor(config: ConfigService, handler: HandlerService, prisma: PrismaService);
-    test(): Promise<any>;
+    test(): Promise<{
+        id: number;
+        payload: import("@prisma/client/runtime/library").JsonValue;
+    }[]>;
     delay(ms: number): void;
     placeOrderWebhook(payload: any): Promise<any>;
     cancelOrderWebhook(payload: any): Promise<any>;

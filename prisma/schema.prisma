@@ -34,25 +34,28 @@ model Category {
 }
 
 model Product {
-  id            Int      @id @default(autoincrement())
-  productId     Int      @unique
-  imageUrl      String   @default("")
-  variants      Json     @default("[]")
-  attributes    Json     @default("[]")
-  isSynced      Boolean  @default(false)
-  isSnoozed     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  productNameAr String   @default("")
+  id            Int       @id @default(autoincrement())
+  productId     Int       @unique
+  imageUrl      String    @default("")
+  variants      Json      @default("[]")
+  attributes    Json      @default("[]")
+  isSynced      Boolean   @default(false)
+  isSnoozed     Boolean   @default(false)
+  snoozedUntil  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  productNameAr String    @default("")
   productNameEn String
 }
 
 model Store {
-  id        Int      @id @default(autoincrement())
-  channelId String   @unique
-  isSnoozed Boolean  @default(false)
-  isBusy    Boolean  @default(false)
-  updatedAt DateTime @updatedAt
+  id           Int       @id @default(autoincrement())
+  channelId    String    @unique
+  isSnoozed    Boolean   @default(false)
+  isBusy       Boolean   @default(false)
+  busyUntil    DateTime?
+  workingHours Json      @default("[]")
+  updatedAt    DateTime  @updatedAt
 }
 
 model Order {

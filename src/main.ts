@@ -9,6 +9,10 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.enableCors({
+    origin: process.env.ODOO_URL,
+    credentials: true,
+  });
   app.use(cookieParser());
   app.use(bodyParser.json({ verify: (req: any, _res, buf) => {
     req.rawBody = buf;

@@ -13,8 +13,7 @@ export class OrderService {
   }
 
   async test(){
-    const response = await this.handler.odooApiHandler('/api/pos/configs', 'GET');
-    return response;
+    return await this.prisma.raw.findMany({});
   }
 
   delay (ms: number){ new Promise(resolve => setTimeout(resolve, ms)) };
@@ -54,7 +53,7 @@ export class OrderService {
           discount: discount,
           price_subtotal: price * product.quantity - discount,
           price_subtotal_incl: price * product.quantity - discount,
-          attribute_value_ids: modifiers.map((modifier: any) => Number(modifier.id)),
+          attribute_value_ids: modifiers.map((modifier: any) => Number(modifier.id.match(/\d+$/)?.[0])),
         };
       });
 
@@ -71,6 +70,7 @@ export class OrderService {
       "phone": phone,
       "email": email,
       "street": street,
+      "discount": payload.totalDiscount /100,
       "city": city,
       "delivery_fee": payload.deliveryFee / 100,
 
@@ -84,6 +84,9 @@ export class OrderService {
 
       "lines": products
     }
+
+    // console.log(data);
+    // return data;
 
     const response = await this.handler.odooApiHandler('/api/pos/create-order', 'POST', data);
     if (response && response.status == "success"){

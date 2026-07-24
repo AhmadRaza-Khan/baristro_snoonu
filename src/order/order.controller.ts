@@ -5,6 +5,11 @@ import { OrderService } from './order.service';
 export class OrderController {
   constructor(private service: OrderService){}
 
+  @Get("test")
+  async test(){
+    return await this.service.test();
+  }
+
   @Post("/place")
   async placeOrder(@Body() payload: any){
     return await this.service.placeOrderWebhook(payload);

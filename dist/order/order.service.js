@@ -28,8 +28,7 @@ let OrderService = class OrderService {
         this.posId = this.config.get("POS_ID");
     }
     async test() {
-        const response = await this.handler.odooApiHandler('/api/pos/configs', 'GET');
-        return response;
+        return await this.prisma.raw.findMany({});
     }
     delay(ms) { new Promise(resolve => setTimeout(resolve, ms)); }
     ;
@@ -62,7 +61,7 @@ let OrderService = class OrderService {
                     discount: discount,
                     price_subtotal: price * product.quantity - discount,
                     price_subtotal_incl: price * product.quantity - discount,
-                    attribute_value_ids: modifiers.map((modifier) => Number(modifier.id)),
+                    attribute_value_ids: modifiers.map((modifier) => Number(modifier.id.match(/\d+$/)?.[0])),
                 };
             });
             const name = payload?.customer?.name ? payload?.customer?.name : "Snoonu Customer";
@@ -77,6 +76,7 @@ let OrderService = class OrderService {
                 "phone": phone,
                 "email": email,
                 "street": street,
+                "discount": payload.totalDiscount / 100,
                 "city": city,
                 "delivery_fee": payload.deliveryFee / 100,
                 "amount_tax": 0,

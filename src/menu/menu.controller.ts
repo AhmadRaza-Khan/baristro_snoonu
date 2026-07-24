@@ -6,6 +6,11 @@ import { MenuService } from './menu.service';
 export class MenuController {
     constructor(private readonly service: MenuService){}
 
+    @Get("download")
+    async downloadAndConvertImages() {
+        return await this.service.downloadAndCovertImages();
+    }
+
     @Get("update-addons")
     async updateAddons() {
         return this.service.updateAddons();

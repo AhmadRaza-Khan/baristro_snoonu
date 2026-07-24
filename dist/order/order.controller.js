@@ -20,6 +20,9 @@ let OrderController = class OrderController {
     constructor(service) {
         this.service = service;
     }
+    async test() {
+        return await this.service.test();
+    }
     async placeOrder(payload) {
         return await this.service.placeOrderWebhook(payload);
     }
@@ -51,6 +54,12 @@ let OrderController = class OrderController {
     }
 };
 exports.OrderController = OrderController;
+__decorate([
+    (0, common_1.Get)("test"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], OrderController.prototype, "test", null);
 __decorate([
     (0, common_1.Post)("/place"),
     __param(0, (0, common_1.Body)()),

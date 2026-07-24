@@ -9,6 +9,7 @@ const navbar = `
   <div id="logout-container" class="navbar-end flex items-center gap-2">
     <a href="/menu/page" class="btn text-xs btn-xs lg:btn-sm btn-ghost text-accent border border-accent hover:bg-accent hover:text-black">Manage</a>
     <a href="/menu/addons/page" class="btn text-xs btn-xs lg:btn-sm btn-ghost text-accent border border-accent hover:bg-accent hover:text-black">Addons</a>
+    <a href="/snooze/store/hours/page" class="btn text-xs btn-xs lg:btn-sm btn-ghost text-accent border border-accent hover:bg-accent hover:text-black">Working Hours</a>
     <button id="btn-store-snooze" class="btn text-xs btn-xs lg:btn-sm btn-ghost text-accent border border-accent hover:bg-accent hover:text-black" disabled>Snooze Store</button>
     <button id="btn-store-busy" class="btn text-xs btn-xs lg:btn-sm btn-ghost text-accent border border-accent hover:bg-accent hover:text-black" disabled>Set Busy</button>
     <button id="btn-logout" class="btn text-xs btn-xs lg:btn-sm text-accent bg-base-300 border border-accent hover:bg-accent hover:border-black hover:border-2 hover:text-black">Logout</button>
@@ -78,9 +79,23 @@ document.body.prepend(wrapper);
   }
 
   btn.addEventListener("click", async () => {
+    const turningBusy = btn.dataset.busy !== "true";
+    let until = null;
+
+    if (turningBusy) {
+      if (typeof pickUntilDatetime !== "function") return;
+      until = await pickUntilDatetime("Set store busy until");
+      if (!until) return;
+    }
+
     btn.disabled = true;
     try {
-      const res = await fetch("/snooze/store/busy", { method: "PATCH", credentials: "include" });
+      const res = await fetch("/snooze/store/busy", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(until ? { until } : {}),
+      });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       render(data.isBusy);

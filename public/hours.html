@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <title>Working Hours</title>
+  <style>
+    .fade-in { animation: fadeIn 0.3s ease both; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .open-toggle { position: relative; display: inline-flex; align-items: center; width: 44px; height: 24px; cursor: pointer; vertical-align: middle; }
+    .open-toggle input { display: none; }
+    .open-toggle .slider { position: absolute; inset: 0; background: #9ca3af; border-radius: 9999px; transition: background 0.3s ease; }
+    .open-toggle .slider::before {
+      content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+      background: white; border-radius: 50%; transition: transform 0.3s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .open-toggle input:checked + .slider { background: #22c55e; }
+    .open-toggle input:checked + .slider::before { transform: translateX(20px); }
+
+    #edit-section.hidden, #view-section.hidden { display: none !important; }
+  </style>
+</head>
+<body class="min-h-screen bg-base-200">
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- View mode -->
+    <div id="view-section">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Working Hours</h1>
+          <p class="text-sm opacity-50 mt-0.5">Main Hours</p>
+        </div>
+        <button id="btn-open-edit" class="btn btn-sm btn-primary">Bulk Update Hours</button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div id="view-days" class="lg:col-span-2 flex flex-col gap-3"></div>
+        <div id="today-summary" class="bg-base-100 rounded-xl border border-base-300 p-4 h-fit"></div>
+      </div>
+
+      <div id="view-loading" class="flex flex-col gap-3 py-4">
+        <div class="skeleton h-16 w-full rounded-xl"></div>
+        <div class="skeleton h-16 w-full rounded-xl opacity-70"></div>
+        <div class="skeleton h-16 w-full rounded-xl opacity-40"></div>
+      </div>
+
+      <div id="view-error" class="hidden text-center py-16">
+        <p class="text-sm opacity-60">Failed to load working hours.</p>
+        <button class="btn btn-sm btn-outline mt-4" onclick="loadHours()">Retry</button>
+      </div>
+    </div>
+
+    <!-- Edit mode -->
+    <div id="edit-section" class="hidden">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <button id="btn-back" class="btn btn-sm btn-ghost">&larr; Back</button>
+          <h1 class="text-lg sm:text-xl font-bold tracking-tight">Bulk Update Main Hours</h1>
+        </div>
+        <button id="btn-save" class="btn btn-sm btn-primary">Save</button>
+      </div>
+
+      <div id="edit-days" class="flex flex-col gap-3"></div>
+    </div>
+
+  </div>
+
+  <script src="/js/cdn.js"></script>
+  <script>
+    const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    let hoursState = null;
+    let editState = null;
+
+    function parseMinutes(hhmm) {
+      const [h, m] = hhmm.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function rangeDurationMinutes(r) {
+      let start = parseMinutes(r.startTime);
+      let end = parseMinutes(r.endTime);
+      if (end <= start) end += 24 * 60;
+      return end - start;
+    }
+
+    function dayDurationMinutes(day) {
+      return day.ranges.reduce((sum, r) => sum + rangeDurationMinutes(r), 0);
+    }
+
+    function formatDuration(totalMinutes) {
+      if (!totalMinutes) return '0 hours';
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      const parts = [];
+      if (h) parts.push(`${h} hour${h !== 1 ? 's' : ''}`);
+      if (m) parts.push(`${m} minute${m !== 1 ? 's' : ''}`);
+      return parts.join(' ');
+    }
+
+    // ── Load & View ──────────────────────────────────────────
+
+    async function loadHours() {
+      const loading = document.getElementById('view-loading');
+      const error = document.getElementById('view-error');
+      loading.classList.remove('hidden');
+      error.classList.add('hidden');
+
+      try {
+        const res = await fetch('/snooze/store/hours', { credentials: 'include' });
+        if (!res.ok) throw new Error('Request failed');
+        hoursState = await res.json();
+        loading.classList.add('hidden');
+        renderView();
+      } catch (e) {
+        console.error(e);
+        loading.classList.add('hidden');
+        error.classList.remove('hidden');
+      }
+    }
+
+    function renderView() {
+      const container = document.getElementById('view-days');
+      const today = new Date().getDay();
+
+      container.innerHTML = hoursState.map((day, i) => {
+        const isToday = i === today;
+        const rangesHtml = (day.isOpen && day.ranges.length)
+          ? day.ranges.map(r => `<span class="text-sm">${r.startTime}, ${DAY_LABELS[i]} <span class="opacity-40">to</span> ${r.endTime}, ${DAY_LABELS[i]}</span>`).join('<span class="opacity-30 mx-2">|</span>')
+          : '<span class="text-sm opacity-40">&mdash;</span>';
+
+        return `
+          <div class="bg-base-100 rounded-xl border ${isToday ? 'border-accent' : 'border-base-300'} px-4 py-3 flex flex-wrap items-center gap-4 fade-in">
+            <div class="w-16 shrink-0">
+              <div class="font-bold text-sm">${DAY_LABELS[i]}</div>
+              ${isToday ? '<span class="badge badge-info badge-xs mt-1">Today</span>' : ''}
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col gap-1">${rangesHtml}</div>
+            <span class="badge badge-outline badge-sm text-info">Duration - ${formatDuration(dayDurationMinutes(day))}</span>
+            <span class="text-sm font-semibold ${day.isOpen ? 'text-success' : 'opacity-40'}">${day.isOpen ? 'Open' : 'Closed'}</span>
+          </div>
+        `;
+      }).join('');
+
+      renderTodaySummary();
+    }
+
+    function renderTodaySummary() {
+      const panel = document.getElementById('today-summary');
+      const today = new Date().getDay();
+      const day = hoursState[today];
+      const dateStr = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+      panel.innerHTML = `
+        <div class="flex gap-2 mb-3">
+          <span class="badge badge-info badge-sm">Today</span>
+          <span class="badge badge-sm ${day.isOpen ? 'badge-success' : 'badge-ghost'}">${day.isOpen ? 'Open' : 'Closed'}</span>
+        </div>
+        <div class="text-sm font-semibold mb-3">${dateStr}</div>
+        ${(day.isOpen && day.ranges.length)
+          ? day.ranges.map(r => `<div class="flex items-center justify-between text-sm opacity-70 gap-4 mb-1"><span>${r.startTime}</span><span>&mdash;</span><span>${r.endTime}</span></div>`).join('')
+          : '<div class="text-sm opacity-40">Closed all day</div>'}
+      `;
+    }
+
+    // ── Edit ──────────────────────────────────────────────────
+
+    function enterEdit() {
+      editState = hoursState.map(d => ({ dayOfWeek: d.dayOfWeek, isOpen: d.isOpen, ranges: d.ranges.map(r => ({ ...r })) }));
+      document.getElementById('view-section').classList.add('hidden');
+      document.getElementById('edit-section').classList.remove('hidden');
+      renderEdit();
+    }
+
+    function exitEdit() {
+      document.getElementById('edit-section').classList.add('hidden');
+      document.getElementById('view-section').classList.remove('hidden');
+    }
+
+    function renderEdit() {
+      const container = document.getElementById('edit-days');
+      container.innerHTML = editState.map((day, i) => {
+        const rangesHtml = day.ranges.map((r, ri) => `
+          <div class="flex items-center gap-2">
+            <input type="time" class="input input-sm input-bordered" data-role="start" data-day="${i}" data-range="${ri}" value="${r.startTime}">
+            <span class="text-xs opacity-50">to</span>
+            <input type="time" class="input input-sm input-bordered" data-role="end" data-day="${i}" data-range="${ri}" value="${r.endTime}">
+            ${day.ranges.length > 1 ? `<button class="btn btn-xs btn-ghost text-error" data-action="remove-range" data-day="${i}" data-range="${ri}">&times;</button>` : ''}
+          </div>
+        `).join('') || '<div class="text-xs opacity-40">No ranges &mdash; day is closed</div>';
+
+        return `
+          <div class="bg-base-100 rounded-xl border border-base-300 px-4 py-3 flex flex-wrap items-center gap-4 fade-in">
+            <div class="w-16 shrink-0">
+              <div class="font-bold text-sm">${DAY_LABELS[i]}</div>
+            </div>
+            <div class="flex-1 min-w-56 flex flex-col gap-2">
+              ${rangesHtml}
+              <button class="btn btn-xs btn-outline w-fit" data-action="add-range" data-day="${i}">+ Add range</button>
+            </div>
+            <span class="badge badge-outline badge-sm text-info" id="edit-duration-${i}">Duration - ${formatDuration(dayDurationMinutes(day))}</span>
+            <label class="open-toggle shrink-0" title="${day.isOpen ? 'Open' : 'Closed'}">
+              <input type="checkbox" data-action="toggle-open" data-day="${i}" ${day.isOpen ? 'checked' : ''}>
+              <span class="slider"></span>
+            </label>
+            <button class="btn btn-xs btn-outline shrink-0" data-action="copy-all" data-day="${i}">Copy to all</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateDurationBadge(dayIdx) {
+      const badge = document.getElementById(`edit-duration-${dayIdx}`);
+      if (badge) badge.textContent = `Duration - ${formatDuration(dayDurationMinutes(editState[dayIdx]))}`;
+    }
+
+    function addRange(dayIdx) {
+      editState[dayIdx].ranges.push({ startTime: '09:00', endTime: '17:00' });
+      renderEdit();
+    }
+
+    function removeRange(dayIdx, rangeIdx) {
+      editState[dayIdx].ranges.splice(rangeIdx, 1);
+      renderEdit();
+    }
+
+    function toggleOpen(dayIdx) {
+      editState[dayIdx].isOpen = !editState[dayIdx].isOpen;
+      if (editState[dayIdx].isOpen && editState[dayIdx].ranges.length === 0) {
+        editState[dayIdx].ranges.push({ startTime: '09:00', endTime: '17:00' });
+      }
+      renderEdit();
+    }
+
+    function copyToAll(dayIdx) {
+      const source = editState[dayIdx];
+      editState = editState.map((d, i) => i === dayIdx ? d : {
+        dayOfWeek: i,
+        isOpen: source.isOpen,
+        ranges: source.ranges.map(r => ({ ...r })),
+      });
+      renderEdit();
+      showToast(`Copied ${DAY_LABELS[dayIdx]}'s hours to all days`, 'success');
+    }
+
+    async function saveHours() {
+      const btn = document.getElementById('btn-save');
+
+      const changedDays = editState.filter((day, i) => JSON.stringify(day) !== JSON.stringify(hoursState[i]));
+
+      if (!changedDays.length) {
+        showToast('No changes to save', 'info');
+        exitEdit();
+        return;
+      }
+
+      btn.disabled = true;
+      try {
+        const results = await Promise.all(changedDays.map(day =>
+          fetch(`/snooze/store/hours/${day.dayOfWeek}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dayOfWeek: day.dayOfWeek, isOpen: day.isOpen, ranges: day.ranges }),
+          }).then(r => r.json())
+        ));
+
+        if (results.some(r => !r.success)) throw new Error('One or more days failed to save');
+
+        hoursState = editState.map(d => ({ dayOfWeek: d.dayOfWeek, isOpen: d.isOpen, ranges: d.ranges.map(r => ({ ...r })) }));
+        renderView();
+        exitEdit();
+
+        if (results.every(r => r.synced)) {
+          showToast(`Saved ${changedDays.length} day${changedDays.length !== 1 ? 's' : ''}`, 'success');
+        } else {
+          showToast('Saved locally, but failed to sync one or more days to Snoonu', 'warning');
+        }
+      } catch (e) {
+        console.error(e);
+        showToast('Failed to save working hours', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ── Wiring ────────────────────────────────────────────────
+
+    document.getElementById('btn-open-edit').addEventListener('click', enterEdit);
+    document.getElementById('btn-back').addEventListener('click', exitEdit);
+    document.getElementById('btn-save').addEventListener('click', saveHours);
+
+    const editDaysContainer = document.getElementById('edit-days');
+
+    editDaysContainer.addEventListener('input', (e) => {
+      const el = e.target;
+      if (el.matches('input[type="time"]')) {
+        const dayIdx = +el.dataset.day;
+        const rangeIdx = +el.dataset.range;
+        editState[dayIdx].ranges[rangeIdx][el.dataset.role === 'start' ? 'startTime' : 'endTime'] = el.value;
+        updateDurationBadge(dayIdx);
+      }
+    });
+
+    editDaysContainer.addEventListener('change', (e) => {
+      const el = e.target;
+      if (el.matches('input[type="checkbox"][data-action="toggle-open"]')) {
+        toggleOpen(+el.dataset.day);
+      }
+    });
+
+    editDaysContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const dayIdx = +btn.dataset.day;
+      const action = btn.dataset.action;
+      if (action === 'add-range') addRange(dayIdx);
+      else if (action === 'remove-range') removeRange(dayIdx, +btn.dataset.range);
+      else if (action === 'copy-all') copyToAll(dayIdx);
+    });
+
+    loadHours();
+  </script>
+</body>
+</html>

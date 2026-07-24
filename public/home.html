@@ -261,11 +261,22 @@
     }
 
     async function toggleSnooze(productId, checkbox) {
+      const turningSnoozed = checkbox.checked;
+      let until = null;
+
+      if (turningSnoozed) {
+        if (typeof pickUntilDatetime !== 'function') { checkbox.checked = false; return; }
+        until = await pickUntilDatetime('Snooze product until');
+        if (!until) { checkbox.checked = false; return; }
+      }
+
       checkbox.disabled = true;
       try {
           const res = await fetch(`/snooze/products/${productId}/snooze`, {
         method: 'PATCH',
           credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(until ? { until } : {}),
         });
         const data = await res.json();
 
