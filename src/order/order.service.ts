@@ -46,10 +46,12 @@ export class OrderService {
         const modifiers = (product.modifierGroups ?? []).flatMap((group: any) => group.modifiers ?? []);
         const price = product.price / 100;
         const discount = product.discountAmount / 100;
+        const remark = typeof product.remark === "string" && product.remark !== "" ? product.remark : null;
         return {
           product_id: Number(product.productId),
           qty: product.quantity,
           price_unit: price,
+          remark: remark,
           discount: discount,
           price_subtotal: price * product.quantity - discount,
           price_subtotal_incl: price * product.quantity - discount,
