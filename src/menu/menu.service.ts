@@ -15,55 +15,151 @@ export class MenuService {
         this.channelId = this.config.get<string>('CHANNELL_ID')!;
     }
 
-    async downloadAndCovertImages(): Promise<any> {
-        const products = await this.prisma.product.findMany({ where: { isSynced: true }});
-        return products;
-        const outputDir = join(process.cwd(), 'public', 'products');
-        mkdirSync(outputDir, { recursive: true });
+    async getAddons(): Promise<any> {
+        return await this.prisma.addon.findMany({});
+    };
 
-        let downloaded = 0;
-        let failed = 0;
+    async addAddons(): Promise<any> {
+        try {
+            const products = await this.prisma.product.findMany({});
 
-        for (const product of products) {
-            if (!product.imageUrl) continue;
+            const addonMap = new Map<number, { attribute_id: number; nameEn: string; nameAr: string; values: any }>();
 
-            try {
-                const response = await fetch(product.imageUrl);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                const buffer = Buffer.from(await response.arrayBuffer());
-                const fileName = product.productNameEn
-                    .trim()
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/^-+|-+$/g, '');
-
-                const image = sharp(buffer);
-                const metadata = await image.metadata();
-
-                if (metadata.format === 'png') {
-                    await image.png().toFile(join(outputDir, `${fileName}.png`));
-                } else {
-                    await image.jpeg().toFile(join(outputDir, `${fileName}.jpg`));
+            for (const product of products) {
+                const attributes = (product.attributes as any[]) ?? [];
+                for (const group of attributes) {
+                    if (!group?.attribute_id || addonMap.has(group.attribute_id)) continue;
+                    addonMap.set(group.attribute_id, {
+                        attribute_id: group.attribute_id,
+                        nameEn: group.attribute_name?.en ?? '',
+                        nameAr: group.attribute_name?.ar ?? '',
+                        values: group.values ?? [],
+                    });
                 }
-                downloaded++;
-            } catch (error: any) {
-                failed++;
-                console.log(`Error occurred while downloading/converting image for product ${product.productId}: \n ${error.message}`);
             }
-        }
 
-        return { success: true, total: products.length, downloaded, failed };
+            const { count } = await this.prisma.addon.createMany({
+                data: Array.from(addonMap.values()),
+                skipDuplicates: true,
+            });
+
+            return { success: true, saved: count, total: addonMap.size };
+        } catch (error: any) {
+            console.log(`Error occurred during saving addons to database: \n ${error.message}`);
+            return { success: false, message: `Error occurred during saving addons to database: \n ${error.message}` };
+        }
+    }
+
+    async updateminutes() {
+        const payload = {
+        "averagePreparationTime": 15,
+        "takeawayPhoneNumber": "",
+        "weekdayAvailabilities": [
+            {
+            "closingTime": "22:00",
+            "openingTime": "07:00",
+            "day": 0,
+            "isClosed": false
+            },
+            {
+            "closingTime": "22:00",
+            "openingTime": "07:00",
+            "day": 1,
+            "isClosed": false
+            },
+            {
+            "closingTime": "22:00",
+            "openingTime": "07:00",
+            "day": 2,
+            "isClosed": false
+            },
+            {
+            "closingTime": "22:00",
+            "openingTime": "07:00",
+            "day": 3,
+            "isClosed": false
+            },
+            {
+            "closingTime": "22:00",
+            "openingTime": "07:00",
+            "day": 4,
+            "isClosed": false
+            },
+            {
+            "closingTime": "11:00",
+            "openingTime": "07:00",
+            "day": 5,
+            "isClosed": false
+            },
+            {
+            "closingTime": "23:30",
+            "openingTime": "12:30",
+            "day": 5,
+            "isClosed": false
+            },
+            {
+            "closingTime": "22:00",
+            "openingTime": "07:00",
+            "day": 6,
+            "isClosed": false
+            }
+        ],
+        "channelId": this.channelId
+        }
+        const result = await this.handler.apiHandler(`/api/v1/stores`, 'PUT', payload);
+        console.log(result);
+        return result;
+    }
+
+    async downloadAndCovertImages(): Promise<any> {
+        const products = await this.prisma.product.findMany();
+        return products;
+        // const outputDir = join(process.cwd(), 'public', 'products');
+        // mkdirSync(outputDir, { recursive: true });
+
+        // let downloaded = 0;
+        // let failed = 0;
+
+        // for (const product of products) {
+        //     if (!product.imageUrl) continue;
+
+        //     try {
+        //         const response = await fetch(product.imageUrl);
+        //         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        //         const buffer = Buffer.from(await response.arrayBuffer());
+        //         const fileName = product.productNameEn
+        //             .trim()
+        //             .toLowerCase()
+        //             .replace(/[^a-z0-9]+/g, '-')
+        //             .replace(/^-+|-+$/g, '');
+
+        //         const image = sharp(buffer);
+        //         const metadata = await image.metadata();
+
+        //         if (metadata.format === 'png') {
+        //             await image.png().toFile(join(outputDir, `${fileName}.png`));
+        //         } else {
+        //             await image.jpeg().toFile(join(outputDir, `${fileName}.jpg`));
+        //         }
+        //         downloaded++;
+        //     } catch (error: any) {
+        //         failed++;
+        //         console.log(`Error occurred while downloading/converting image for product ${product.productId}: \n ${error.message}`);
+        //     }
+        // }
+
+        // return { success: true, total: products.length, downloaded, failed };
     }
 
     async updateAddons(): Promise<any> {
-        const response = await this.prisma.product.findMany({ where: { isSynced: false } });
+        const response = await this.prisma.product.findMany({ });
         return response;
     }
 
     async updateAddonName(valueId: number, nameAr: string): Promise<any> {
         try {
-            const products = await this.prisma.product.findMany({ where: { isSynced: false } });
+            const products = await this.prisma.product.findMany();
             let updated = 0;
 
             for (const product of products) {
@@ -97,7 +193,7 @@ export class MenuService {
 
     async updateAddonGroupName(attributeId: number, nameAr: string): Promise<any> {
         try {
-            const products = await this.prisma.product.findMany({ where: { isSynced: false } });
+            const products = await this.prisma.product.findMany();
             let updated = 0;
 
             for (const product of products) {
@@ -128,9 +224,19 @@ export class MenuService {
     }
 
     async saveCategoriesToDB(): Promise<any> {
+
         const response = await this.handler.odooApiHandler("/api/pos/categs", "GET");
         try {
             const categories: { category_id: number; category_name: any; products: any[] }[] = response?.data ?? [];
+
+            // for (const cat of categories) {
+            //     await this.prisma.category.updateMany({
+            //         where: { categoryId: cat.category_id },
+            //         data: { products: cat.products },
+            //     });
+            // }
+
+            // return { success: true, saved: categories.length };
 
             for (const cat of categories) {
                 await this.prisma.category.upsert({
@@ -138,7 +244,7 @@ export class MenuService {
                     update: { nameEn: cat.category_name.en, nameAr: cat.category_name.ar, products: cat.products },
                     create: { categoryId: cat.category_id, categoryName: cat.category_name.en, nameEn: cat.category_name.en, nameAr: cat.category_name.ar, products: cat.products },
                 });
-            }
+            };
 
             return { success: true, saved: categories.length };
         } catch (error: any) {
@@ -149,24 +255,34 @@ export class MenuService {
 
     async saveProductsToDB(): Promise<any> {
         try {
+
             const response = await this.handler.odooApiHandler("/api/pos/products", "GET");
 
-            // await Promise.all((response?.products ?? []).map(async (product: any) => {
-            //     const attributes = product.attributes || [];
+            const products = response?.products ?? [];
 
-            //     await this.prisma.product.updateMany({
-            //         where: { productId: product.id },
-            //         data: { attributes, productNameEn: product.name.en, productNameAr: product.name.ar, imageUrl: product.image_url, variants: product.variants},
-            //     });
-            // }));
+            const toData = (p: any) => ({
+            attributes: p.attributes ?? [],
+            variants: p.variants ?? [],
+            productNameEn: p.name?.en ?? '',
+            productNameAr: p.name?.ar ?? '',
+            imageUrl: p.image ?? '',
+            descriptionEn: p.description?.en ?? '',
+            descriptionAr: p.description?.ar ?? '',
+            });
 
-            await Promise.all((response?.products ?? []).map(async (product: any) => {
-
-                await this.prisma.product.updateMany({
-                    where: { productId: product.id },
-                    data: {imageUrl: product.image, variants: product.variants },
-                });
-            }));
+            const CHUNK = 20;
+            for (let i = 0; i < products.length; i += CHUNK) {
+            const batch = products.slice(i, i + CHUNK);
+            const results = await Promise.allSettled(
+                batch.map((p: any) =>
+                this.prisma.product.upsert({
+                    where: { productId: p.id },
+                    update: toData(p),
+                    create: { productId: p.id, ...toData(p) },
+                }),
+                ),
+            );
+            }
 
             return { success: true };
         } catch (error: any) {
@@ -187,8 +303,8 @@ export class MenuService {
             const config: any = [];
 
             const [allProducts, categories] = await Promise.all([
-                this.prisma.product.findMany({ where: { isSynced: true } }),
-                this.prisma.category.findMany({}),
+                this.prisma.product.findMany({ where: { isSynced: false } }),
+                this.prisma.category.findMany({ orderBy: { id: 'asc' }, }),
             ]);
 
             const isBilingual = (en: string, ar: string) =>
@@ -245,12 +361,69 @@ export class MenuService {
 
             const modGroupMap = new Map<string, any>();
             const modifierMap = new Map<string, any>();
+            const selected = [
+            {
+                "productId": 617,
+                   "attributes": [
+                    {
+                        "id": 21,
+                        "min": 1,
+                        "max": 1
+                    },
+                    {
+                        "id": 12,
+                        "min": 0,
+                        "max": 2
+                    }
+                   ]
+            },
+            {
+                "productId": 5299,
+                   "attributes": [
+                    {
+                        "id": 20,
+                        "min": 3,
+                        "max": 3
+                    }
+                   ]
+            },
+            {
+                "productId": 5300,
+                   "attributes": [
+                    {
+                        "id": 20,
+                        "min": 3,
+                        "max": 3
+                    }
+                   ]
+            },
+        ];
 
             for (const product of products) {
                 for (const attrGroup of (product.attributes as any[]) ?? []) {
                     const groupNameEn = attrGroup.attribute_name?.en || '';
                     const groupNameAr = attrGroup.attribute_name?.ar || '';
                     if (!groupNameEn || !groupNameAr || groupNameEn === groupNameAr) continue;
+
+                    let min;
+                    let max
+
+                    if (product.productId === 617 && attrGroup.attribute_id === 21) {
+                        min = 1;
+                        max = 1;
+                    } else if (product.productId === 617 && attrGroup.attribute_id === 12) {
+                        min = 0;
+                        max = 2;
+                    } else if (product.productId === 5299 && attrGroup.attribute_id === 20) {
+                        min = 3;
+                        max = 3;
+                    } else if (product.productId === 5300 && attrGroup.attribute_id === 20) {
+                        min = 3;
+                        max = 3;
+                    } else {
+                        min = null
+                        max = null
+                    };
 
                     const modGroupId = `modgroup${attrGroup.attribute_id}`;
                     const modifierIds: string[] = [];
@@ -277,7 +450,13 @@ export class MenuService {
                                 ],
                                 price: Number(val.price_extra ?? 0),
                                 snoozed: false,
-                                channelConfigurations: [{ channelId: this.channelId, snoozed: false }],
+                                channelConfigurations: [
+                                    {
+                                         channelId: this.channelId,
+                                          snoozed: false,
+                                          preparationTime: 15
+                                         }
+                                ],
                             });
                         }
                     }
@@ -293,8 +472,6 @@ export class MenuService {
                                 { language: 0, value: '' },
                                 { language: 1, value: '' },
                             ],
-                            max: 0,
-                            min: 0,
                             modifierIds,
                             snoozed: false,
                             channelConfigurations: [{ channelId: this.channelId, snoozed: false }],
@@ -330,8 +507,8 @@ export class MenuService {
                         { language: 1, value: product.productNameAr },
                     ],
                     description: [
-                        { language: 0, value: variants[0]?.description?.en ?? '' },
-                        { language: 1, value: variants[0]?.description?.ar ?? '' },
+                        { language: 0, value: product.descriptionEn ?? '' },
+                        { language: 1, value: product.descriptionAr ?? '' },
                     ],
                     price,
                     defaultDiscount: 0,
@@ -394,13 +571,12 @@ export class MenuService {
             };
 
 
-            return menu;
-            // const result = await this.handler.apiHandler(`/api/v1/menu/save`, 'POST', menu);
-            // await this.prisma.product.updateMany({
-            //     where: { productId: { in: products.map(p => p.productId) } },
-            //     data: { isSynced: true },
-            // });
-            // return { success: true, result };
+            const result = await this.handler.apiHandler(`/api/v1/menu/save`, 'POST', menu);
+            await this.prisma.product.updateMany({
+                where: { productId: { in: products.map(p => p.productId) } },
+                data: { isSynced: true },
+            });
+            return { success: true, result };
         } catch (error: any) {
             console.error('Error saving menu:', error);
             return { success: false, message: error.message };
@@ -408,7 +584,7 @@ export class MenuService {
     }
 
     async listProducts(): Promise<any> {
-        return this.prisma.product.findMany({ where: { isSynced: true }, orderBy: { productId: 'asc' } });
+        return this.prisma.product.findMany({ orderBy: { productId: 'asc' } });
     }
 
     async deleteProduct(productId: number): Promise<any> {

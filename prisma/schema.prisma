@@ -46,6 +46,10 @@ model Product {
   updatedAt     DateTime  @updatedAt
   productNameAr String    @default("")
   productNameEn String
+  descriptionAr String?
+  descriptionEn String?
+  max           Int?
+  min           Int?
 }
 
 model Store {
@@ -68,4 +72,13 @@ model Order {
 model Raw {
   id           Int      @id @default(autoincrement())
   payload     Json
+}
+
+
+model Addon {
+  id           Int @id @default(autoincrement())
+  attribute_id Int @unique
+  nameAr       String?
+  nameEn       String?
+  values    Json      @default("[]")
 }

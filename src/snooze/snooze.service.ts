@@ -181,6 +181,7 @@ export class SnoozeService {
     }
 
     private async syncWorkingHoursToSnoonu(days: WorkingHoursDay[]): Promise<void> {
+        console.log("working")
         const weekdayAvailabilities = days.flatMap(day => {
             if (day.isOpen && day.ranges.length) {
                 return day.ranges.map(range => ({
@@ -194,12 +195,14 @@ export class SnoozeService {
         });
 
         const payload = {
-            averagePreparationTime: 8271,
+            averagePreparationTime: 15,
             takeawayPhoneNumber: '',
             weekdayAvailabilities,
             channelId: this.channelId,
         };
+        console.log(payload)
+        const response = await this.handler.apiHandler('/api/v1/stores', 'PUT', payload);
+        console.log(response);
 
-        await this.handler.apiHandler('/api/v1/stores', 'PUT', payload);
     }
 }
