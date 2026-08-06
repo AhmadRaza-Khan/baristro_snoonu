@@ -302,10 +302,36 @@ export class MenuService {
             const menuImageUrl = this.config.get<string>('MENU_IMAGE_URL') ?? '';
             const config: any = [];
 
-            const [allProducts, categories] = await Promise.all([
+            const [allProducts, categories, addons] = await Promise.all([
                 this.prisma.product.findMany({ where: { isSynced: false } }),
                 this.prisma.category.findMany({ orderBy: { id: 'asc' }, }),
+                this.prisma.addon.findMany({}),
             ]);
+
+            const addonMap = new Map<number, { nameEn: string; nameAr: string; values: Map<number, { en: string; ar: string }> }>();
+            for (const addon of addons) {
+                addonMap.set(addon.attribute_id, {
+                    nameEn: addon.nameEn ?? '',
+                    nameAr: addon.nameAr ?? '',
+                    values: new Map(((addon.values as any[]) ?? []).map((v: any) => [v.id, { en: v.name?.en ?? '', ar: v.name?.ar ?? '' }])),
+                });
+            }
+
+            const groupNames = (a: any) => {
+                const addonGroup = addonMap.get(a.attribute_id);
+                return {
+                    en: addonGroup?.nameEn || a.attribute_name?.en || '',
+                    ar: addonGroup?.nameAr || a.attribute_name?.ar || '',
+                };
+            };
+
+            const valueNames = (a: any, v: any) => {
+                const addonValue = addonMap.get(a.attribute_id)?.values.get(v.id);
+                return {
+                    en: addonValue?.en || v.name?.en || '',
+                    ar: addonValue?.ar || v.name?.ar || '',
+                };
+            };
 
             const isBilingual = (en: string, ar: string) =>
                 !!en && !!ar && en.trim() !== ar.trim();
@@ -319,10 +345,14 @@ export class MenuService {
                 if (!variants.every((v: any) => isBilingual(v.name?.en, v.name?.ar))) return false;
 
                 const attrs = (p.attributes as any[]) ?? [];
-                return attrs.every((a: any) =>
-                    isBilingual(a.attribute_name?.en, a.attribute_name?.ar) &&
-                    (a.values ?? []).every((v: any) => isBilingual(v.name?.en, v.name?.ar))
-                );
+                return attrs.every((a: any) => {
+                    const group = groupNames(a);
+                    if (!isBilingual(group.en, group.ar)) return false;
+                    return (a.values ?? []).every((v: any) => {
+                        const value = valueNames(a, v);
+                        return isBilingual(value.en, value.ar);
+                    });
+                });
             });
 
             if (products.length === 0) {
@@ -345,11 +375,13 @@ export class MenuService {
 
                     const attrs = (p.attributes as any[]) ?? [];
                     attrs.forEach((a: any) => {
-                        if (!isBilingual(a.attribute_name?.en, a.attribute_name?.ar))
-                            reasons.push(`Attribute "${a.attribute_name?.en}" (id: ${a.attribute_id}) missing Arabic or same as English`);
+                        const group = groupNames(a);
+                        if (!isBilingual(group.en, group.ar))
+                            reasons.push(`Attribute "${group.en}" (id: ${a.attribute_id}) missing Arabic or same as English`);
                         (a.values ?? []).forEach((v: any) => {
-                            if (!isBilingual(v.name?.en, v.name?.ar))
-                                reasons.push(`Attribute "${a.attribute_name?.en}" → value "${v.name?.en}" (id: ${v.id}) missing Arabic or same as English`);
+                            const value = valueNames(a, v);
+                            if (!isBilingual(value.en, value.ar))
+                                reasons.push(`Attribute "${group.en}" → value "${value.en}" (id: ${v.id}) missing Arabic or same as English`);
                         });
                     });
 
@@ -358,6 +390,13 @@ export class MenuService {
 
                 return { success: false, message: 'No eligible products to sync', products: report };
             }
+
+            const categoryProductIdSet = new Set(
+                categories.flatMap((cat: any) =>
+                    ((cat.products as any[]) ?? []).map((p: any) => String(p.id)),
+                ),
+            );
+            const categorizedProducts = products.filter(p => categoryProductIdSet.has(String(p.productId)));
 
             const modGroupMap = new Map<string, any>();
             const modifierMap = new Map<string, any>();
@@ -399,10 +438,11 @@ export class MenuService {
             },
         ];
 
-            for (const product of products) {
+            for (const product of categorizedProducts) {
                 for (const attrGroup of (product.attributes as any[]) ?? []) {
-                    const groupNameEn = attrGroup.attribute_name?.en || '';
-                    const groupNameAr = attrGroup.attribute_name?.ar || '';
+                    const group = groupNames(attrGroup);
+                    const groupNameEn = group.en;
+                    const groupNameAr = group.ar;
                     if (!groupNameEn || !groupNameAr || groupNameEn === groupNameAr) continue;
 
                     let min;
@@ -429,8 +469,9 @@ export class MenuService {
                     const modifierIds: string[] = [];
 
                     for (const val of attrGroup.values ?? []) {
-                        const modNameEn = val.name?.en || '';
-                        const modNameAr = val.name?.ar || '';
+                        const value = valueNames(attrGroup, val);
+                        const modNameEn = value.en;
+                        const modNameAr = value.ar;
                         if (!modNameEn || !modNameAr || modNameEn === modNameAr) continue;
 
                         const modId = `mod${val.id}`;
@@ -489,9 +530,9 @@ export class MenuService {
                 .filter((g: any) => g.modifierIds.length > 0);
 
             const finalModGroupIds = new Set(finalModGroups.map((g: any) => g.modGroupId));
-            const eligibleProductIdSet = new Set(products.map(p => String(p.productId)));
+            const eligibleProductIdSet = new Set(categorizedProducts.map(p => String(p.productId)));
 
-            const formattedProducts = products.map((product, i) => {
+            const formattedProducts = categorizedProducts.map((product, i) => {
                 const attrs = (product.attributes as any[]) ?? [];
                 const variants = (product.variants as any[]) ?? [];
                 const price = Number(variants[0]?.price ?? 0);
@@ -571,9 +612,10 @@ export class MenuService {
             };
 
 
+
             const result = await this.handler.apiHandler(`/api/v1/menu/save`, 'POST', menu);
             await this.prisma.product.updateMany({
-                where: { productId: { in: products.map(p => p.productId) } },
+                where: { productId: { in: categorizedProducts.map(p => p.productId) } },
                 data: { isSynced: true },
             });
             return { success: true, result };
