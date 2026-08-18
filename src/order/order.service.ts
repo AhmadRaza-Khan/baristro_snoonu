@@ -74,7 +74,6 @@ export class OrderService {
       "street": street,
       "discount": payload.totalDiscount /100,
       "city": city,
-      "delivery_fee": payload.deliveryFee / 100,
 
       "amount_tax": 0,
       "amount_total": payload.payment.amount / 100,

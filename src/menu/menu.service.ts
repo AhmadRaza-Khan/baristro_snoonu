@@ -112,7 +112,7 @@ export class MenuService {
     }
 
     async downloadAndCovertImages(): Promise<any> {
-        const products = await this.prisma.product.findMany();
+        const products = await this.prisma.product.findUnique({ where: { productId: 5299 } });
         return products;
         // const outputDir = join(process.cwd(), 'public', 'products');
         // mkdirSync(outputDir, { recursive: true });
@@ -226,6 +226,8 @@ export class MenuService {
     async saveCategoriesToDB(): Promise<any> {
 
         const response = await this.handler.odooApiHandler("/api/pos/categs", "GET");
+        const required = response.data?.find(c => c.category_id === 7);
+        return required;
         try {
             const categories: { category_id: number; category_name: any; products: any[] }[] = response?.data ?? [];
 
@@ -291,6 +293,11 @@ export class MenuService {
         }
     }
 
+    async resetMenu(){
+        await this.prisma.product.updateMany({where: {isSynced: true}, data: { isSynced: false}})
+        return "hello"
+    }
+
 
     async saveMenu(): Promise<any> {
         // await this.prisma.product.updateMany({where: {isSynced: true}, data: { isSynced: false}})
@@ -302,11 +309,19 @@ export class MenuService {
             const menuImageUrl = this.config.get<string>('MENU_IMAGE_URL') ?? '';
             const config: any = [];
 
-            const [allProducts, categories, addons] = await Promise.all([
+            const [allProducts, unorderedCategories, addons] = await Promise.all([
                 this.prisma.product.findMany({ where: { isSynced: false } }),
                 this.prisma.category.findMany({ orderBy: { id: 'asc' }, }),
                 this.prisma.addon.findMany({}),
             ]);
+
+            // Brunch, Desserts, Tea, Non-Coffee, Coffee Drinks, Merchandise
+            const CATEGORY_DISPLAY_ORDER = [13, 14, 24, 28, 27, 4];
+            const categories = [...unorderedCategories].sort((a, b) => {
+                const ai = CATEGORY_DISPLAY_ORDER.indexOf(a.categoryId);
+                const bi = CATEGORY_DISPLAY_ORDER.indexOf(b.categoryId);
+                return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+            });
 
             const addonMap = new Map<number, { nameEn: string; nameAr: string; values: Map<number, { en: string; ar: string }> }>();
             for (const addon of addons) {
@@ -331,6 +346,11 @@ export class MenuService {
                     en: addonValue?.en || v.name?.en || '',
                     ar: addonValue?.ar || v.name?.ar || '',
                 };
+            };
+
+            const groupModGroupId = (a: any) => {
+                const valueIds = ((a.values as any[]) ?? []).map((v: any) => v.id).sort((x: number, y: number) => x - y);
+                return `modgroup${a.attribute_id}_${valueIds.join('-')}`;
             };
 
             const isBilingual = (en: string, ar: string) =>
@@ -406,8 +426,8 @@ export class MenuService {
                    "attributes": [
                     {
                         "id": 21,
-                        "min": 1,
-                        "max": 1
+                        "min": 0,
+                        "max": 3
                     },
                     {
                         "id": 12,
@@ -421,7 +441,7 @@ export class MenuService {
                    "attributes": [
                     {
                         "id": 20,
-                        "min": 3,
+                        "min": 1,
                         "max": 3
                     }
                    ]
@@ -431,12 +451,19 @@ export class MenuService {
                    "attributes": [
                     {
                         "id": 20,
-                        "min": 3,
+                        "min": 1,
                         "max": 3
                     }
                    ]
             },
         ];
+
+            const selectedMinMax = new Map<string, { min: number; max: number }>();
+            for (const s of selected) {
+                for (const a of s.attributes) {
+                    selectedMinMax.set(`${s.productId}_${a.id}`, { min: a.min, max: a.max });
+                }
+            }
 
             for (const product of categorizedProducts) {
                 for (const attrGroup of (product.attributes as any[]) ?? []) {
@@ -445,27 +472,9 @@ export class MenuService {
                     const groupNameAr = group.ar;
                     if (!groupNameEn || !groupNameAr || groupNameEn === groupNameAr) continue;
 
-                    let min;
-                    let max
+                    const minMax = selectedMinMax.get(`${product.productId}_${attrGroup.attribute_id}`);
 
-                    if (product.productId === 617 && attrGroup.attribute_id === 21) {
-                        min = 1;
-                        max = 1;
-                    } else if (product.productId === 617 && attrGroup.attribute_id === 12) {
-                        min = 0;
-                        max = 2;
-                    } else if (product.productId === 5299 && attrGroup.attribute_id === 20) {
-                        min = 3;
-                        max = 3;
-                    } else if (product.productId === 5300 && attrGroup.attribute_id === 20) {
-                        min = 3;
-                        max = 3;
-                    } else {
-                        min = null
-                        max = null
-                    };
-
-                    const modGroupId = `modgroup${attrGroup.attribute_id}`;
+                    const modGroupId = groupModGroupId(attrGroup);
                     const modifierIds: string[] = [];
 
                     for (const val of attrGroup.values ?? []) {
@@ -490,6 +499,7 @@ export class MenuService {
                                     { language: 1, value: '' },
                                 ],
                                 price: Number(val.price_extra ?? 0),
+                                ...(minMax ? { min: minMax.min, max: minMax.max } : {}),
                                 snoozed: false,
                                 channelConfigurations: [
                                     {
@@ -532,12 +542,25 @@ export class MenuService {
             const finalModGroupIds = new Set(finalModGroups.map((g: any) => g.modGroupId));
             const eligibleProductIdSet = new Set(categorizedProducts.map(p => String(p.productId)));
 
+            const productSortOrderMap = new Map<string, number>();
+            {
+                let counter = 1;
+                for (const cat of categories) {
+                    const catProductIds = ((cat.products as any[]) ?? []).map((p: any) => String(p.id));
+                    for (const pid of catProductIds) {
+                        if (eligibleProductIdSet.has(pid) && !productSortOrderMap.has(pid)) {
+                            productSortOrderMap.set(pid, counter++);
+                        }
+                    }
+                }
+            }
+
             const formattedProducts = categorizedProducts.map((product, i) => {
                 const attrs = (product.attributes as any[]) ?? [];
                 const variants = (product.variants as any[]) ?? [];
                 const price = Number(variants[0]?.price ?? 0);
                 const modifierGroups = attrs
-                    .map((a: any) => `modgroup${a.attribute_id}`)
+                    .map((a: any) => groupModGroupId(a))
                     .filter((id: string) => finalModGroupIds.has(id));
 
                 return {
@@ -553,7 +576,7 @@ export class MenuService {
                     ],
                     price,
                     defaultDiscount: 0,
-                    sortOrder: i + 1,
+                    sortOrder: productSortOrderMap.get(String(product.productId)) ?? (i + 1),
                     modifierGroups,
                     snoozed: product.isSnoozed,
                     channelConfigurations: [
@@ -610,8 +633,6 @@ export class MenuService {
                 modifierGroups: finalModGroups,
                 modifiers: Array.from(modifierMap.values()),
             };
-
-
 
             const result = await this.handler.apiHandler(`/api/v1/menu/save`, 'POST', menu);
             await this.prisma.product.updateMany({

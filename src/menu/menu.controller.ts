@@ -6,6 +6,11 @@ import { MenuService } from './menu.service';
 export class MenuController {
     constructor(private readonly service: MenuService){}
 
+    @Get("reset")
+    async resetMenu() {
+        return await this.service.resetMenu();
+    }
+
     @Get("addons")
     async getAddons() {
         return await this.service.getAddons();
